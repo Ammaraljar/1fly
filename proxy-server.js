@@ -1,100 +1,36 @@
-// ============================================================
-//  SkyFly Proxy Server — يحل مشكلة CORS نهائياً
-//  تشغيل: node proxy-server.js
-//  المتطلبات: Node.js فقط (مثبت على كل جهاز)
-//  بعد التشغيل افتح: http://localhost:3001
-// ============================================================
-const http  = require('http');
-const https = require('https');
-const fs    = require('fs');
-const path  = require('path');
-const url   = require('url');
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
 
-const PORT = process.env.PORT || 3001;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// ── CORS Headers ────────────────────────────────────────────
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+app.use(cors());
+app.use(express.static('public')); // هذا للملفات الثابتة مثل index.html
 
-// ── Main Request Handler ─────────────────────────────────────
-const server = http.createServer((req, res) => {
-  const parsed = url.parse(req.url, true);
+// قراءة مفتاح API من متغيرات البيئة
+const API_KEY = process.env.AVIATIONSTACK_KEY || '29371284e19bc35fa6de600358b2c48e';
 
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204, CORS);
-    res.end();
-    return;
-  }
-
-  // ── Serve the HTML file ──────────────────────────────────
-  if (parsed.pathname === '/' || parsed.pathname === '/index.html') {
-    const htmlFile = path.join(__dirname, 'index.html');
-    if (!fs.existsSync(htmlFile)) {
-      res.writeHead(404); res.end('skyfly-live.html not found in same folder');
-      return;
+// هذا هو المسار المهم - تأكد أنه مكتوب بالضبط '/api/flights'
+app.get('/api/flights', async (req, res) => {
+    console.log('📡 تم استقبال طلب للرحلات');
+    try {
+        const response = await fetch(`http://api.aviationstack.com/v1/flights?access_key=${API_KEY}&limit=100`);
+        const data = await response.json();
+        console.log('✅ تم جلب البيانات بنجاح');
+        res.json(data);
+    } catch (error) {
+        console.error('❌ خطأ في جلب البيانات:', error.message);
+        res.status(500).json({ error: error.message });
     }
-    const html = fs.readFileSync(htmlFile, 'utf8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...CORS });
-    res.end(html);
-    return;
-  }
-
-  // ── Proxy: /api?url=<encoded_aviationstack_url> ──────────
-  if (parsed.pathname === '/api') {
-    const target = parsed.query.url;
-    if (!target) {
-      res.writeHead(400, CORS); res.end('Missing ?url= parameter');
-      return;
-    }
-
-    const targetUrl = url.parse(target);
-    const options = {
-      hostname: targetUrl.hostname,
-      path:     targetUrl.path,
-      method:   'GET',
-      headers:  { 'User-Agent': 'SkyFly-Proxy/1.0' }
-    };
-
-    // Use https or http based on target protocol
-    const transport = (targetUrl.protocol === 'https:') ? https : http;
-
-    const proxyReq = transport.request(options, (proxyRes) => {
-      let body = '';
-      proxyRes.on('data', chunk => body += chunk);
-      proxyRes.on('end', () => {
-        res.writeHead(proxyRes.statusCode, {
-          'Content-Type': 'application/json; charset=utf-8',
-          ...CORS
-        });
-        res.end(body);
-      });
-    });
-
-    proxyReq.on('error', (e) => {
-      res.writeHead(502, CORS);
-      res.end(JSON.stringify({ error: 'Proxy error: ' + e.message }));
-    });
-
-    proxyReq.end();
-    return;
-  }
-
-  res.writeHead(404, CORS);
-  res.end('Not found');
 });
 
-server.listen(PORT, () => {
-  console.log('');
-  console.log('  ✈  SkyFly Proxy Server');
-  console.log('  ─────────────────────────────────────');
-  console.log(`  🟢  Running at:  http://localhost:${PORT}`);
-  console.log('  📂  Serving:     skyfly-live.html');
-  console.log('  🔑  API Proxy:   http://localhost:' + PORT + '/api?url=...');
-  console.log('  ─────────────────────────────────────');
-  console.log('  افتح المتصفح على: http://localhost:' + PORT);
-  console.log('');
+// مسار للتأكد من عمل السيرفر
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date() });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`);
+    console.log(`🔑 حالة المفتاح: ${API_KEY ? 'موجود' : 'غير موجود'}`);
 });
