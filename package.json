@@ -1,0 +1,12 @@
+{
+  "name": "skyfly",
+  "version": "1.0.0",
+  "description": "SkyFly Flight Booking System",
+  "main": "proxy-server.js",
+  "scripts": {
+    "start": "node proxy-server.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
