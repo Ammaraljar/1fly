@@ -32,7 +32,7 @@ const server = http.createServer((req, res) => {
 
   // ── Serve the HTML file ──────────────────────────────────
   if (parsed.pathname === '/' || parsed.pathname === '/index.html') {
-    const htmlFile = path.join(__dirname, 'skyfly-live.html');
+    const htmlFile = path.join(__dirname, 'index.html');
     if (!fs.existsSync(htmlFile)) {
       res.writeHead(404); res.end('skyfly-live.html not found in same folder');
       return;
