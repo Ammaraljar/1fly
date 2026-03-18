@@ -478,7 +478,7 @@ function guessAirlineCode(name){
     'Emirates':'EK','Qatar Airways':'QR','Oman Air':'WY','Saudia':'SV',
     'Gulf Air':'GF','EgyptAir':'MS','Turkish Airlines':'TK',
     'Lufthansa':'LH','British Airways':'BA','Air France':'AF',
-    'Etihad Airways':'EY','Royal Jordanian':'RJ','Kuwait Airways':'KU',
+    'Etihad':'EY','Etihad Airways':'EY','Royal Jordanian':'RJ','Kuwait Airways':'KU',
     'flydubai':'FZ','Air Arabia':'G9','IndiGo':'6E','Air India':'AI',
     'Singapore Airlines':'SQ','Cathay Pacific':'CX','Japan Airlines':'JL',
     'ANA':'NH','Korean Air':'KE','Qantas':'QF','Air Canada':'AC',
@@ -652,7 +652,7 @@ function fCard(f,type){
       <div class="dl">
         <div class="dt">${f.duration||'—'}</div>
         <div class="fl2"><div class="ln"></div><span style="font-size:15px">✈</span><div class="ln"></div></div>
-        <span class="stt ns">Non-stop</span>
+        ${f.stops===0?'<span class="stt ns">Non-stop</span>':f.stops===1?'<span class="stt st2">1 stop · via '+(f.via||'hub')+'</span>':'<span class="stt st2">'+f.stops+' stops</span>'}
       </div>
       <div class="tb"><div class="bigt">${f.arrTime}</div><div class="apc">${f.to}</div><div class="cit">${f.toCity}</div></div>
     </div>
