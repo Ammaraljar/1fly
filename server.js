@@ -2,10 +2,9 @@ const http  = require('http');
 const https = require('https');
 const fs    = require('fs');
 const path  = require('path');
-const url   = require('url');
 
-const PORT    = process.env.PORT || 3001;
-const API_KEY = 'cmmufiu140009jh04vcba593m';
+const PORT     = process.env.PORT || 3001;
+const SERP_KEY = '6597815d9772c000bf2addb28480236f722ddf2ccd882e6a0e033e1c62b93ade';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -13,120 +12,142 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-function httpsGet(targetUrl, headers) {
+function httpsGet(url) {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(targetUrl);
-    const opts = {
-      hostname: parsed.hostname,
-      path:     parsed.pathname + parsed.search,
-      method:   'GET',
-      headers:  headers
-    };
-    const req = https.request(opts, res => {
+    const u = new URL(url);
+    https.request({ hostname: u.hostname, path: u.pathname + u.search, method: 'GET',
+      headers: { 'User-Agent': 'SkyFly/1.0', 'Accept': 'application/json' }
+    }, res => {
       let body = '';
       res.on('data', c => body += c);
       res.on('end', () => resolve({ status: res.statusCode, body }));
-    });
-    req.on('error', reject);
-    req.end();
+    }).on('error', reject).end();
   });
 }
 
 const server = http.createServer(async (req, res) => {
-  const reqUrl  = new URL(req.url, `http://localhost:${PORT}`);
-  const path2   = reqUrl.pathname;
+  const u = new URL(req.url, `http://localhost:${PORT}`);
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204, CORS); res.end(); return;
-  }
+  if (req.method === 'OPTIONS') { res.writeHead(204, CORS); res.end(); return; }
 
   // Serve HTML
-  if (path2 === '/' || path2 === '/index.html') {
-    const htmlPath = path.join(__dirname, 'index.html');
-    if (!fs.existsSync(htmlPath)) {
-      res.writeHead(404, CORS); res.end('index.html not found'); return;
-    }
+  if (u.pathname === '/' || u.pathname === '/index.html') {
+    const p = path.join(__dirname, 'index.html');
+    if (!fs.existsSync(p)) { res.writeHead(404, CORS); res.end('index.html not found'); return; }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...CORS });
-    res.end(fs.readFileSync(htmlPath, 'utf8')); return;
+    res.end(fs.readFileSync(p, 'utf8')); return;
   }
 
-  // API proxy: /api?orig=DXB&dest=LHR&date=2026-03-17
-  if (path2 === '/api') {
-    const orig = reqUrl.searchParams.get('orig');
-    const dest = reqUrl.searchParams.get('dest');
-    const date = reqUrl.searchParams.get('date');
+  // /api?orig=DXB&dest=LHR&date=2026-03-18&cabin=ECONOMY&adults=1
+  if (u.pathname === '/api') {
+    const orig   = u.searchParams.get('orig')   || '';
+    const dest   = u.searchParams.get('dest')   || '';
+    const date   = u.searchParams.get('date')   || '';
+    const cabin  = u.searchParams.get('cabin')  || 'ECONOMY';
+    const adults = u.searchParams.get('adults') || '1';
 
     if (!orig || !dest || !date) {
       res.writeHead(400, CORS);
       res.end(JSON.stringify({ error: 'Missing orig, dest or date' })); return;
     }
 
-    const fromDt = `${date}T00:00`;
-    const toDt   = `${date}T23:59`;
+    // SerpAPI Google Flights
+    // travel_class: 1=Economy 2=PremiumEconomy 3=Business 4=First
+    const classMap = { ECONOMY: 1, PREMIUM_ECONOMY: 2, BUSINESS: 3, FIRST: 4 };
+    const travelClass = classMap[cabin.toUpperCase()] || 1;
 
-    // AeroDataBox via api.market — correct base URL for api.market keys
-    const apiUrl = `https://prod.api.market/api/v1/aedbx/aerodatabox/airports/iata/${orig}/flights/departures/${fromDt}/${toDt}?withLeg=true&direction=Departure&withCancelled=false&withCodeshared=true&withCargo=false&withPrivate=false`;
+    const params = new URLSearchParams({
+      engine:        'google_flights',
+      departure_id:  orig,
+      arrival_id:    dest,
+      outbound_date: date,
+      currency:      'USD',
+      hl:            'en',
+      adults:        adults,
+      travel_class:  travelClass,
+      type:          '2', // one-way
+      api_key:       SERP_KEY
+    });
 
-    console.log(`[API] ${orig} → ${dest} | ${date}`);
-    console.log(`[API] URL: ${apiUrl}`);
+    const apiUrl = `https://serpapi.com/search?${params.toString()}`;
+    console.log(`[SERP] ${orig} → ${dest} | ${date} | ${cabin}`);
 
     try {
-      const result = await httpsGet(apiUrl, {
-        'x-api-market-key': API_KEY,
-        'Accept':           'application/json',
-        'User-Agent':       'SkyFly/1.0'
-      });
-
-      console.log(`[API] Status: ${result.status}`);
-      console.log(`[API] Body preview: ${result.body.slice(0, 300)}`);
+      const result = await httpsGet(apiUrl);
+      console.log(`[SERP] Status: ${result.status} | Size: ${result.body.length}`);
 
       if (result.status !== 200) {
-        // If api.market fails, try RapidAPI endpoint
-        console.log('[API] Trying RapidAPI endpoint...');
-        const rapidUrl = `https://aerodatabox.p.rapidapi.com/airports/iata/${orig}/flights/departures/${fromDt}/${toDt}?withLeg=true&direction=Departure&withCancelled=false&withCodeshared=true&withCargo=false&withPrivate=false`;
-        
-        const r2 = await httpsGet(rapidUrl, {
-          'X-RapidAPI-Key':  API_KEY,
-          'X-RapidAPI-Host': 'aerodatabox.p.rapidapi.com',
-          'Accept':          'application/json',
-        });
-
-        console.log(`[RapidAPI] Status: ${r2.status}`);
-        console.log(`[RapidAPI] Body preview: ${r2.body.slice(0, 300)}`);
-
-        if (r2.status === 200) {
-          const data2 = JSON.parse(r2.body);
-          const all2  = data2.departures || data2.items || (Array.isArray(data2) ? data2 : []);
-          const filtered2 = all2.filter(f => {
-            const arrIata = (f.arrival?.airport?.iata || f.movement?.airport?.iata || '').toUpperCase();
-            return arrIata === dest.toUpperCase();
-          });
-          console.log(`[RapidAPI] Found ${filtered2.length} flights to ${dest}`);
-          res.writeHead(200, { 'Content-Type': 'application/json', ...CORS });
-          res.end(JSON.stringify({ flights: filtered2, total: filtered2.length, source: 'rapidapi' }));
-          return;
-        }
-
+        console.log(`[SERP] Error body: ${result.body.slice(0, 500)}`);
         res.writeHead(result.status, CORS);
-        res.end(JSON.stringify({ error: `API error ${result.status}`, body: result.body })); return;
+        res.end(result.body); return;
       }
 
       const data = JSON.parse(result.body);
-      const all  = data.departures || data.items || (Array.isArray(data) ? data : []);
-      console.log(`[API] Total departures from ${orig}: ${all.length}`);
 
-      const filtered = all.filter(f => {
-        const arrIata = (f.arrival?.airport?.iata || f.movement?.airport?.iata || '').toUpperCase();
-        return arrIata === dest.toUpperCase();
+      // SerpAPI Google Flights response structure
+      const bestFlights  = data.best_flights  || [];
+      const otherFlights = data.other_flights || [];
+      const allFlights   = [...bestFlights, ...otherFlights];
+
+      console.log(`[SERP] Found ${allFlights.length} results (best:${bestFlights.length} other:${otherFlights.length})`);
+
+      // Parse into our format
+      const flights = [];
+      allFlights.forEach((offer, idx) => {
+        const legs = offer.flights || [];
+        if (!legs.length) return;
+
+        const first = legs[0];
+        const last  = legs[legs.length - 1];
+
+        const fn       = first.flight_number || `${first.airline_logo?.match(/\/([A-Z]{2})\./)?.[1] || '??'}${idx}`;
+        const airline  = first.airline || '';
+        const depTime  = (first.departure_airport?.time || '').substring(11, 16) || '--:--';
+        const arrTime  = (last.arrival_airport?.time   || '').substring(11, 16) || '--:--';
+        const fromCode = first.departure_airport?.id   || orig;
+        const toCode   = last.arrival_airport?.id      || dest;
+        const aircraft = first.airplane || '';
+        const stops    = legs.length - 1;
+        const price    = offer.price || 0;
+        const dur      = offer.total_duration
+          ? `${Math.floor(offer.total_duration/60)}h ${String(offer.total_duration%60).padStart(2,'0')}m`
+          : '';
+
+        // Build legs info
+        const legDetails = legs.map(l => ({
+          fn:       l.flight_number || '',
+          airline:  l.airline || '',
+          from:     l.departure_airport?.id   || '',
+          to:       l.arrival_airport?.id     || '',
+          dep:      (l.departure_airport?.time || '').substring(11, 16) || '--:--',
+          arr:      (l.arrival_airport?.time  || '').substring(11, 16) || '--:--',
+          aircraft: l.airplane || '',
+          dur:      l.duration ? `${Math.floor(l.duration/60)}h ${String(l.duration%60).padStart(2,'0')}m` : ''
+        }));
+
+        flights.push({
+          id:          `${fn}-${idx}`,
+          flightNum:   fn,
+          airline:     airline,
+          from:        fromCode,
+          to:          toCode,
+          depTime,
+          arrTime,
+          duration:    dur,
+          aircraft,
+          stops,
+          price,
+          cabin,
+          legs:        legDetails,
+          isBest:      idx < bestFlights.length
+        });
       });
 
-      console.log(`[API] Flights to ${dest}: ${filtered.length}`);
-
       res.writeHead(200, { 'Content-Type': 'application/json', ...CORS });
-      res.end(JSON.stringify({ flights: filtered, total: filtered.length, source: 'apimarket' }));
+      res.end(JSON.stringify({ flights, total: flights.length }));
 
     } catch (e) {
-      console.error('[API] Error:', e.message);
+      console.error('[SERP] Error:', e.message);
       res.writeHead(500, CORS);
       res.end(JSON.stringify({ error: e.message }));
     }
@@ -137,5 +158,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  ✈  SkyFly running at http://localhost:${PORT}\n`);
+  console.log(`\n  ✈  SkyFly + SerpAPI running at http://localhost:${PORT}\n`);
 });
