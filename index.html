@@ -457,7 +457,8 @@ function updPax(){
 // ══════════════════════════════════════════
 async function fetchFlights(orig,dest,date){
   try{
-    const r = await fetch(SERVER+'/api?orig='+orig+'&dest='+dest+'&date='+date);
+    const params = new URLSearchParams({orig,dest,date,cabin:S.cabin,adults:S.adults});
+    const r = await fetch(SERVER+'/api?'+params.toString());
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     if(d.error) throw new Error(d.error);
@@ -467,6 +468,94 @@ async function fetchFlights(orig,dest,date){
     return {data:[], orig, dest, date, source:'empty'};
   }
 }
+
+
+// ══════════════════════════════════════
+// PARSE — SerpAPI Google Flights format
+// ══════════════════════════════════════
+function guessAirlineCode(name){
+  const map={
+    'Emirates':'EK','Qatar Airways':'QR','Oman Air':'WY','Saudia':'SV',
+    'Gulf Air':'GF','EgyptAir':'MS','Turkish Airlines':'TK',
+    'Lufthansa':'LH','British Airways':'BA','Air France':'AF',
+    'Etihad Airways':'EY','Royal Jordanian':'RJ','Kuwait Airways':'KU',
+    'flydubai':'FZ','Air Arabia':'G9','IndiGo':'6E','Air India':'AI',
+    'Singapore Airlines':'SQ','Cathay Pacific':'CX','Japan Airlines':'JL',
+    'ANA':'NH','Korean Air':'KE','Qantas':'QF','Air Canada':'AC',
+    'United Airlines':'UA','American Airlines':'AA','Delta Air Lines':'DL',
+    'KLM':'KL','Swiss':'LX','Iberia':'IB','TAP Air Portugal':'TP',
+    'Finnair':'AY','SAS':'SK','Norwegian':'DY','Malaysia Airlines':'MH',
+    'Thai Airways':'TG','Garuda Indonesia':'GA','Philippine Airlines':'PR',
+    'Vietnam Airlines':'VN','China Airlines':'CI','Eva Air':'BR',
+  };
+  for(const [n,code] of Object.entries(map)){
+    if((name||'').toLowerCase().includes(n.toLowerCase())) return code;
+  }
+  return '??';
+}
+
+function estPrice(from,to,cabin){
+  const sh=['MCT','DOH','DXB','RUH','JED','KWI','BAH','AUH','AMM','BEY','CAI','DMM','MED'];
+  const mh=['DEL','BOM','KHI','LHE','DAC','CMB','BKK','KUL','SIN','NBO','ADD','TLV','IST'];
+  const isS=sh.includes(from)&&sh.includes(to);
+  const isM=mh.includes(to)||mh.includes(from);
+  let b=isS?80+Math.floor(Math.random()*120):isM?220+Math.floor(Math.random()*280):520+Math.floor(Math.random()*580);
+  const m={ECONOMY:1,PREMIUM_ECONOMY:1.6,BUSINESS:3.2,FIRST:5.5};
+  return Math.round(b*(m[cabin]||1));
+}
+
+function parseFlights(data,cabin,depDate){
+  const out=[], seen=new Set();
+  (data.data||[]).forEach((f,i)=>{
+    try{
+      const code = guessAirlineCode(f.airline||'');
+      const al   = alInfo(code);
+      const fromC = (f.from||'???').toUpperCase();
+      const toC   = (f.to||'???').toUpperCase();
+      const depT  = f.depTime || '--:--';
+      const arrT  = f.arrTime || '--:--';
+      const key   = (f.flightNum||'X')+fromC+toC+depT;
+      if(seen.has(key)) return; seen.add(key);
+
+      // Build transit legs
+      let leg1=null,leg2=null,via=null,viaCity=null,layoverMins=null;
+      if(f.stops>0 && f.legs && f.legs.length>=2){
+        leg1={flightNum:f.legs[0].fn,aircraft:f.legs[0].aircraft,
+          from:f.legs[0].from,to:f.legs[0].to,
+          fromCity:getCity(f.legs[0].from),toCity:getCity(f.legs[0].to),
+          dep:f.legs[0].dep,arr:f.legs[0].arr,dur:f.legs[0].dur};
+        leg2={flightNum:f.legs[1].fn,aircraft:f.legs[1].aircraft,
+          from:f.legs[1].from,to:f.legs[1].to,
+          fromCity:getCity(f.legs[1].from),toCity:getCity(f.legs[1].to),
+          dep:f.legs[1].dep,arr:f.legs[1].arr,dur:f.legs[1].dur};
+        via=f.legs[0].to; viaCity=getCity(via);
+        const a1=leg1.arr,d2=leg2.dep;
+        if(a1&&d2&&a1!=='--:--'&&d2!=='--:--'){
+          const am=+a1.split(':')[0]*60+ +a1.split(':')[1];
+          const dm=+d2.split(':')[0]*60+ +d2.split(':')[1];
+          layoverMins=dm>=am?dm-am:1440-am+dm;
+        }
+      }
+
+      out.push({
+        id:`${f.flightNum||'XX'}-${i}-${Math.random().toString(36).slice(2,5)}`,
+        airline:code, airlineName:f.airline||al.n, colorClass:al.cl,
+        flightNum:f.flightNum||'??', aircraft:f.aircraft||'',
+        from:fromC, to:toC,
+        fromCity:getCity(fromC), toCity:getCity(toC),
+        depTime:depT, arrTime:arrT, duration:f.duration||'',
+        cabin, price:f.price||estPrice(fromC,toC,cabin),
+        localPrice:0, localCurrency:'USD',
+        seats:null, stops:f.stops||0,
+        via, viaCity, layoverMins, leg1, leg2,
+        legs:f.legs||[], depDate, status:'scheduled',
+        isBest:f.isBest||false
+      });
+    }catch(e){ console.error('Parse error:',e); }
+  });
+  return out.sort((a,b)=>a.price-b.price);
+}
+
 
 async function doSearch(){
   const oc=document.getElementById('orig').dataset.code;
@@ -569,7 +658,7 @@ function fCard(f,type){
     </div>
     <div class="fcr"><span class="ctag ${ctag}">${ctxt}</span><div class="act">${f.aircraft||''}</div><div style="font-size:9px;font-weight:600;color:${statC};margin-top:3px">${statT}</div></div>
     <div class="prs">
-      <div class="pm2"><span>USD </span>${f.price>0?f.price.toLocaleString():'—'}</div>
+      <div class="pm2">${f.price>0?'<span>USD </span>'+f.price.toLocaleString():'<span style="font-size:14px">Checking price…</span>'}</div>
       ${f.localCurrency&&f.localCurrency!=='USD'?`<div class="pl">${f.localCurrency} ${(f.localPrice||0).toLocaleString()}</div>`:''}
       <button class="selbtn">${isSel?'✓ Selected':'Select'}</button>
     </div>
