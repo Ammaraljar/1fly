@@ -478,20 +478,31 @@ function guessAirlineCode(name){
     'Emirates':'EK','Qatar Airways':'QR','Oman Air':'WY','Saudia':'SV',
     'Gulf Air':'GF','EgyptAir':'MS','Turkish Airlines':'TK',
     'Lufthansa':'LH','British Airways':'BA','Air France':'AF',
-    'Etihad':'EY','Etihad Airways':'EY','Royal Jordanian':'RJ','Kuwait Airways':'KU',
-    'flydubai':'FZ','Air Arabia':'G9','IndiGo':'6E','Air India':'AI',
-    'Singapore Airlines':'SQ','Cathay Pacific':'CX','Japan Airlines':'JL',
-    'ANA':'NH','Korean Air':'KE','Qantas':'QF','Air Canada':'AC',
+    'Etihad':'EY','Etihad Airways':'EY','Royal Jordanian':'RJ',
+    'Kuwait Airways':'KU','flydubai':'FZ','Air Arabia':'G9',
+    'IndiGo':'6E','Air India':'AI','Singapore Airlines':'SQ',
+    'Cathay Pacific':'CX','Japan Airlines':'JL','ANA':'NH',
+    'Korean Air':'KE','Qantas':'QF','Jetstar':'JQ','Air Canada':'AC',
     'United Airlines':'UA','American Airlines':'AA','Delta Air Lines':'DL',
     'KLM':'KL','Swiss':'LX','Iberia':'IB','TAP Air Portugal':'TP',
     'Finnair':'AY','SAS':'SK','Norwegian':'DY','Malaysia Airlines':'MH',
     'Thai Airways':'TG','Garuda Indonesia':'GA','Philippine Airlines':'PR',
     'Vietnam Airlines':'VN','China Airlines':'CI','Eva Air':'BR',
+    'WizzAir':'W6','Ryanair':'FR','easyJet':'U2',
+    'flydubai':'FZ','Air Arabia':'G9','Pegasus':'PC',
+    'SriLankan Airlines':'UL','Nepal Airlines':'RA','Biman':'BG',
+    'Kenya Airways':'KQ','Ethiopian Airlines':'ET','Egypt Air':'MS',
   };
   for(const [n,code] of Object.entries(map)){
     if((name||'').toLowerCase().includes(n.toLowerCase())) return code;
   }
+  // Try to extract from flight number like "QR 845" → "QR"
   return '??';
+}
+
+function getCodeFromFN(fn){
+  const m = (fn||'').match(/^([A-Z]{2}|[A-Z][0-9]|[0-9][A-Z])/);
+  return m ? m[1] : '??';
 }
 
 function estPrice(from,to,cabin){
@@ -504,56 +515,91 @@ function estPrice(from,to,cabin){
   return Math.round(b*(m[cabin]||1));
 }
 
-function parseFlights(data,cabin,depDate){
-  const out=[], seen=new Set();
-  (data.data||[]).forEach((f,i)=>{
-    try{
-      const code = guessAirlineCode(f.airline||'');
+function parseFlights(data, cabin, depDate){
+  const out = [], seen = new Set();
+
+  (data.data || []).forEach((f, i) => {
+    try {
+      // Get airline code from flight number first, then airline name
+      const codeFromFN   = getCodeFromFN(f.flightNum);
+      const codeFromName = guessAirlineCode(f.airline);
+      const code = (codeFromFN !== '??') ? codeFromFN : (codeFromName !== '??' ? codeFromName : '??');
       const al   = alInfo(code);
-      const fromC = (f.from||'???').toUpperCase();
-      const toC   = (f.to||'???').toUpperCase();
+
+      const fromC = (f.from || '???').toUpperCase();
+      const toC   = (f.to   || '???').toUpperCase();
       const depT  = f.depTime || '--:--';
       const arrT  = f.arrTime || '--:--';
-      const key   = (f.flightNum||'X')+fromC+toC+depT;
-      if(seen.has(key)) return; seen.add(key);
 
-      // Build transit legs
-      let leg1=null,leg2=null,via=null,viaCity=null,layoverMins=null;
-      if(f.stops>0 && f.legs && f.legs.length>=2){
-        leg1={flightNum:f.legs[0].fn,aircraft:f.legs[0].aircraft,
-          from:f.legs[0].from,to:f.legs[0].to,
-          fromCity:getCity(f.legs[0].from),toCity:getCity(f.legs[0].to),
-          dep:f.legs[0].dep,arr:f.legs[0].arr,dur:f.legs[0].dur};
-        leg2={flightNum:f.legs[1].fn,aircraft:f.legs[1].aircraft,
-          from:f.legs[1].from,to:f.legs[1].to,
-          fromCity:getCity(f.legs[1].from),toCity:getCity(f.legs[1].to),
-          dep:f.legs[1].dep,arr:f.legs[1].arr,dur:f.legs[1].dur};
-        via=f.legs[0].to; viaCity=getCity(via);
-        const a1=leg1.arr,d2=leg2.dep;
-        if(a1&&d2&&a1!=='--:--'&&d2!=='--:--'){
-          const am=+a1.split(':')[0]*60+ +a1.split(':')[1];
-          const dm=+d2.split(':')[0]*60+ +d2.split(':')[1];
-          layoverMins=dm>=am?dm-am:1440-am+dm;
-        }
+      const key = (f.flightNum||'X') + fromC + toC + depT;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      // Build leg objects from server data
+      const legs = f.legs || [];
+      let leg1 = null, leg2 = null;
+      const via        = f.via        || null;
+      const viaCity    = f.viaCity    || (via ? getCity(via) : null);
+      const layoverMins = f.layoverMins || null;
+
+      if (f.stops > 0 && legs.length >= 2) {
+        leg1 = {
+          flightNum: legs[0].fn || '',
+          aircraft:  legs[0].aircraft || '',
+          from:      (legs[0].from || '').toUpperCase(),
+          to:        (legs[0].to   || '').toUpperCase(),
+          fromCity:  legs[0].fromCity || getCity((legs[0].from||'').toUpperCase()),
+          toCity:    legs[0].toCity   || getCity((legs[0].to  ||'').toUpperCase()),
+          dep:       legs[0].dep  || '--:--',
+          arr:       legs[0].arr  || '--:--',
+          dur:       legs[0].dur  || '',
+        };
+        leg2 = {
+          flightNum: legs[1].fn || '',
+          aircraft:  legs[1].aircraft || '',
+          from:      (legs[1].from || '').toUpperCase(),
+          to:        (legs[1].to   || '').toUpperCase(),
+          fromCity:  legs[1].fromCity || getCity((legs[1].from||'').toUpperCase()),
+          toCity:    legs[1].toCity   || getCity((legs[1].to  ||'').toUpperCase()),
+          dep:       legs[1].dep  || '--:--',
+          arr:       legs[1].arr  || '--:--',
+          dur:       legs[1].dur  || '',
+        };
       }
 
       out.push({
-        id:`${f.flightNum||'XX'}-${i}-${Math.random().toString(36).slice(2,5)}`,
-        airline:code, airlineName:f.airline||al.n, colorClass:al.cl,
-        flightNum:f.flightNum||'??', aircraft:f.aircraft||'',
-        from:fromC, to:toC,
-        fromCity:getCity(fromC), toCity:getCity(toC),
-        depTime:depT, arrTime:arrT, duration:f.duration||'',
-        cabin, price:f.price||estPrice(fromC,toC,cabin),
-        localPrice:0, localCurrency:'USD',
-        seats:null, stops:f.stops||0,
-        via, viaCity, layoverMins, leg1, leg2,
-        legs:f.legs||[], depDate, status:'scheduled',
-        isBest:f.isBest||false
+        id:          `${(f.flightNum||'XX').replace(' ','')}-${i}-${Math.random().toString(36).slice(2,5)}`,
+        airline:     code,
+        airlineName: f.airline || al.n,
+        colorClass:  al.cl,
+        flightNum:   (f.flightNum || '??').trim(),
+        aircraft:    f.aircraft || '',
+        from:        fromC,
+        to:          toC,
+        fromCity:    f.fromCity || getCity(fromC),
+        toCity:      f.toCity   || getCity(toC),
+        depTime:     depT,
+        arrTime:     arrT,
+        duration:    f.duration || '',
+        cabin,
+        price:       f.price > 0 ? f.price : estPrice(fromC, toC, cabin),
+        localPrice:  0,
+        localCurrency: 'USD',
+        seats:       null,
+        stops:       f.stops || 0,
+        via, viaCity, layoverMins,
+        leg1, leg2,
+        legs,
+        depDate,
+        status:      'scheduled',
+        isBest:      f.isBest || false
       });
-    }catch(e){ console.error('Parse error:',e); }
+    } catch(e) {
+      console.error('Parse error:', e);
+    }
   });
-  return out.sort((a,b)=>a.price-b.price);
+
+  return out.sort((a, b) => a.price - b.price);
 }
 
 
@@ -651,8 +697,12 @@ function fCard(f,type){
       <div class="tb"><div class="bigt">${f.depTime}</div><div class="apc">${f.from}</div><div class="cit">${f.fromCity}</div></div>
       <div class="dl">
         <div class="dt">${f.duration||'—'}</div>
-        <div class="fl2"><div class="ln"></div><span style="font-size:15px">✈</span><div class="ln"></div></div>
-        ${f.stops===0?'<span class="stt ns">Non-stop</span>':f.stops===1?'<span class="stt st2">1 stop · via '+(f.via||'hub')+'</span>':'<span class="stt st2">'+f.stops+' stops</span>'}
+        <div class="fl2"><div class="ln"></div>${f.stops>0?'<span style="color:var(--orange);font-size:9px;margin:0 2px">●</span>':''}<span style="font-size:15px">✈</span><div class="ln"></div></div>
+        ${f.stops===0
+          ?'<span class="stt ns">Non-stop</span>'
+          :f.stops===1
+            ?'<span class="stt st2">1 stop · '+(f.viaCity||f.via||'hub')+(f.layoverMins?' ('+Math.floor(f.layoverMins/60)+'h '+String(f.layoverMins%60).padStart(2,'0')+'m)':'')+'</span>'
+            :'<span class="stt st2">'+f.stops+' stops</span>'}
       </div>
       <div class="tb"><div class="bigt">${f.arrTime}</div><div class="apc">${f.to}</div><div class="cit">${f.toCity}</div></div>
     </div>
