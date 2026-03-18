@@ -90,6 +90,29 @@ const server = http.createServer(async (req, res) => {
       const allFlights   = [...bestFlights, ...otherFlights];
 
       console.log(`[SERP] Found ${allFlights.length} results (best:${bestFlights.length} other:${otherFlights.length})`);
+      // Log first flight structure for debugging
+      if(allFlights.length > 0){
+        const f0 = allFlights[0];
+        console.log('[SERP] First flight sample:');
+        console.log('  price:', f0.price);
+        console.log('  total_duration:', f0.total_duration);
+        console.log('  flights count:', (f0.flights||[]).length);
+        if(f0.flights && f0.flights[0]){
+          const l = f0.flights[0];
+          console.log('  leg0 flight_number:', l.flight_number);
+          console.log('  leg0 airline:', l.airline);
+          console.log('  leg0 dep:', l.departure_airport?.id, l.departure_airport?.time);
+          console.log('  leg0 arr:', l.arrival_airport?.id, l.arrival_airport?.time);
+          console.log('  leg0 duration:', l.duration);
+        }
+        if(f0.flights && f0.flights[1]){
+          const l2 = f0.flights[1];
+          console.log('  leg1 flight_number:', l2.flight_number);
+          console.log('  leg1 dep:', l2.departure_airport?.id, l2.departure_airport?.time);
+          console.log('  leg1 arr:', l2.arrival_airport?.id, l2.arrival_airport?.time);
+        }
+        console.log('  layovers:', JSON.stringify(f0.layovers||[]));
+      }
 
       // Parse into our format
       const flights = [];
@@ -108,13 +131,15 @@ const server = http.createServer(async (req, res) => {
         const toCode   = last.arrival_airport?.id      || dest;
         const aircraft = first.airplane || '';
         const stops    = legs.length - 1;
+        // Also check layovers array for stop count
+        const layovers = offer.layovers || [];
         const price    = offer.price || 0;
         const dur      = offer.total_duration
           ? `${Math.floor(offer.total_duration/60)}h ${String(offer.total_duration%60).padStart(2,'0')}m`
           : '';
 
-        // Build legs info
-        const legDetails = legs.map(l => ({
+        // Build legs info with layover times
+        const legDetails = legs.map((l, li) => ({
           fn:       l.flight_number || '',
           airline:  l.airline || '',
           from:     l.departure_airport?.id   || '',
@@ -122,7 +147,9 @@ const server = http.createServer(async (req, res) => {
           dep:      (l.departure_airport?.time || '').substring(11, 16) || '--:--',
           arr:      (l.arrival_airport?.time  || '').substring(11, 16) || '--:--',
           aircraft: l.airplane || '',
-          dur:      l.duration ? `${Math.floor(l.duration/60)}h ${String(l.duration%60).padStart(2,'0')}m` : ''
+          dur:      l.duration ? `${Math.floor(l.duration/60)}h ${String(l.duration%60).padStart(2,'0')}m` : '',
+          layover:  layovers[li] ? `${Math.floor(layovers[li].duration/60)}h ${String(layovers[li].duration%60).padStart(2,'0')}m` : null,
+          layoverAirport: layovers[li]?.name || null
         }));
 
         flights.push({
