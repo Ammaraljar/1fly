@@ -874,12 +874,14 @@ function resetHome(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.addEventListener('DOMContentLoaded',()=>{
-  const t=new Date();t.setDate(t.getDate()+1);
-  document.getElementById('depDate').value=t.toISOString().split('T')[0];
-  document.getElementById('depDate').min=t.toISOString().split('T')[0];
-  const r=new Date();r.setDate(r.getDate()+8);
+  const today=new Date().toISOString().split('T')[0];
+  // Default: today for departure
+  document.getElementById('depDate').value=today;
+  document.getElementById('depDate').min=today;
+  // Return: 7 days from today
+  const r=new Date();r.setDate(r.getDate()+7);
   document.getElementById('retDate').value=r.toISOString().split('T')[0];
-  document.getElementById('retDate').min=t.toISOString().split('T')[0];
+  document.getElementById('retDate').min=today;
 });
 </script>
 </body>
