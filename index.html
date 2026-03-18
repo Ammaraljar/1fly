@@ -192,9 +192,9 @@ footer strong{color:#fff;}
       <button class="tab" onclick="setTrip('rt',this)">Round-trip</button>
     </div>
     <div class="sf" id="sf">
-      <div class="fg"><label>From</label><div class="fi"><input id="orig" placeholder="City or airport" autocomplete="off" oninput="acS(this,'acO')" onfocus="acS(this,'acO')"><div class="ac" id="acO"></div></div></div>
+      <div class="fg"><label>From</label><div class="fi"><input id="orig" placeholder="City or airport name..." autocomplete="off" oninput="this.dataset.code='';acS(this,'acO')" onfocus="acS(this,'acO')"><div class="ac" id="acO"></div></div></div>
       <div style="display:flex;align-items:flex-end;padding-bottom:1px"><button class="swap" onclick="swapAp()">⇄</button></div>
-      <div class="fg"><label>To</label><div class="fi"><input id="dest" placeholder="City or airport" autocomplete="off" oninput="acS(this,'acD')" onfocus="acS(this,'acD')"><div class="ac" id="acD"></div></div></div>
+      <div class="fg"><label>To</label><div class="fi"><input id="dest" placeholder="City or airport name..." autocomplete="off" oninput="this.dataset.code='';acS(this,'acD')" onfocus="acS(this,'acD')"><div class="ac" id="acD"></div></div></div>
       <div class="fg"><label>Departure</label><div class="fi"><input type="date" id="depDate"></div></div>
       <div class="fg" id="retFld" style="display:none"><label>Return</label><div class="fi"><input type="date" id="retDate"></div></div>
       <div class="fg" style="position:relative">
@@ -299,76 +299,236 @@ const SERVER = 'https://onefly-1.onrender.com';
 // AIRPORTS
 // ══════════════════════════════════════════
 const AP=[
-  {code:'MCT',city:'Muscat',name:'Muscat International',country:'Oman'},
-  {code:'DOH',city:'Doha',name:'Hamad International',country:'Qatar'},
+  // ── MIDDLE EAST ──
   {code:'DXB',city:'Dubai',name:'Dubai International',country:'UAE'},
   {code:'AUH',city:'Abu Dhabi',name:'Abu Dhabi International',country:'UAE'},
+  {code:'SHJ',city:'Sharjah',name:'Sharjah International',country:'UAE'},
+  {code:'DOH',city:'Doha',name:'Hamad International',country:'Qatar'},
+  {code:'MCT',city:'Muscat',name:'Muscat International',country:'Oman'},
+  {code:'SLL',city:'Salalah',name:'Salalah Airport',country:'Oman'},
   {code:'RUH',city:'Riyadh',name:'King Khalid International',country:'Saudi Arabia'},
   {code:'JED',city:'Jeddah',name:'King Abdulaziz International',country:'Saudi Arabia'},
   {code:'MED',city:'Madinah',name:'Prince Mohammad Bin Abdulaziz',country:'Saudi Arabia'},
   {code:'DMM',city:'Dammam',name:'King Fahd International',country:'Saudi Arabia'},
+  {code:'AHB',city:'Abha',name:'Abha International Airport',country:'Saudi Arabia'},
+  {code:'TIF',city:'Taif',name:'Taif Regional Airport',country:'Saudi Arabia'},
+  {code:'GIZ',city:'Jizan',name:'King Abdullah bin Abdulaziz Airport',country:'Saudi Arabia'},
+  {code:'ELQ',city:'Qassim',name:'Prince Nayef bin Abdulaziz',country:'Saudi Arabia'},
+  {code:'KWI',city:'Kuwait City',name:'Kuwait International',country:'Kuwait'},
+  {code:'BAH',city:'Manama',name:'Bahrain International',country:'Bahrain'},
+  {code:'AMM',city:'Amman',name:'Queen Alia International',country:'Jordan'},
+  {code:'AQJ',city:'Aqaba',name:'King Hussein International',country:'Jordan'},
+  {code:'BEY',city:'Beirut',name:'Rafic Hariri International',country:'Lebanon'},
+  {code:'DAM',city:'Damascus',name:'Damascus International',country:'Syria'},
+  {code:'BGW',city:'Baghdad',name:'Baghdad International',country:'Iraq'},
+  {code:'BSR',city:'Basra',name:'Basra International',country:'Iraq'},
+  {code:'NJF',city:'Najaf',name:'Al Najaf International',country:'Iraq'},
+  {code:'EBL',city:'Erbil',name:'Erbil International',country:'Iraq'},
+  {code:'SAN',city:"Sana'a",name:"Sana'a International",country:'Yemen'},
+  {code:'TLV',city:'Tel Aviv',name:'Ben Gurion International',country:'Israel'},
+  {code:'ETH',city:'Eilat',name:'Ramon Airport',country:'Israel'},
+  {code:'MHD',city:'Mashhad',name:'Shahid Hashemi Nejad',country:'Iran'},
+  {code:'IKA',city:'Tehran',name:'Imam Khomeini International',country:'Iran'},
+  {code:'THR',city:'Tehran',name:'Mehrabad International',country:'Iran'},
+  // ── EUROPE ──
   {code:'LHR',city:'London',name:'Heathrow Airport',country:'UK'},
   {code:'LGW',city:'London Gatwick',name:'Gatwick Airport',country:'UK'},
+  {code:'STN',city:'London Stansted',name:'Stansted Airport',country:'UK'},
+  {code:'LTN',city:'London Luton',name:'Luton Airport',country:'UK'},
+  {code:'MAN',city:'Manchester',name:'Manchester Airport',country:'UK'},
+  {code:'EDI',city:'Edinburgh',name:'Edinburgh Airport',country:'UK'},
+  {code:'BHX',city:'Birmingham',name:'Birmingham Airport',country:'UK'},
   {code:'CDG',city:'Paris',name:'Charles de Gaulle',country:'France'},
+  {code:'ORY',city:'Paris Orly',name:'Orly Airport',country:'France'},
+  {code:'NCE',city:'Nice',name:'Nice Côte d'Azur',country:'France'},
+  {code:'LYS',city:'Lyon',name:'Lyon-Saint Exupéry',country:'France'},
   {code:'FRA',city:'Frankfurt',name:'Frankfurt Airport',country:'Germany'},
   {code:'MUC',city:'Munich',name:'Munich Airport',country:'Germany'},
-  {code:'JFK',city:'New York',name:'JFK International',country:'USA'},
-  {code:'LAX',city:'Los Angeles',name:'Los Angeles International',country:'USA'},
-  {code:'ORD',city:'Chicago',name:"O'Hare International",country:'USA'},
-  {code:'DFW',city:'Dallas',name:'Dallas/Fort Worth',country:'USA'},
-  {code:'MIA',city:'Miami',name:'Miami International',country:'USA'},
-  {code:'SYD',city:'Sydney',name:'Sydney Airport',country:'Australia'},
-  {code:'MEL',city:'Melbourne',name:'Melbourne Airport',country:'Australia'},
+  {code:'BER',city:'Berlin',name:'Berlin Brandenburg',country:'Germany'},
+  {code:'DUS',city:'Düsseldorf',name:'Düsseldorf Airport',country:'Germany'},
+  {code:'HAM',city:'Hamburg',name:'Hamburg Airport',country:'Germany'},
+  {code:'AMS',city:'Amsterdam',name:'Amsterdam Schiphol',country:'Netherlands'},
+  {code:'BRU',city:'Brussels',name:'Brussels Airport',country:'Belgium'},
+  {code:'ZRH',city:'Zurich',name:'Zurich Airport',country:'Switzerland'},
+  {code:'GVA',city:'Geneva',name:'Geneva Airport',country:'Switzerland'},
+  {code:'VIE',city:'Vienna',name:'Vienna International',country:'Austria'},
+  {code:'MAD',city:'Madrid',name:'Adolfo Suárez Madrid-Barajas',country:'Spain'},
+  {code:'BCN',city:'Barcelona',name:'Barcelona El Prat',country:'Spain'},
+  {code:'AGP',city:'Malaga',name:'Málaga Airport',country:'Spain'},
+  {code:'PMI',city:'Palma',name:'Palma de Mallorca',country:'Spain'},
+  {code:'LIS',city:'Lisbon',name:'Humberto Delgado Airport',country:'Portugal'},
+  {code:'OPO',city:'Porto',name:'Francisco Sá Carneiro',country:'Portugal'},
+  {code:'FCO',city:'Rome',name:'Leonardo da Vinci (Fiumicino)',country:'Italy'},
+  {code:'MXP',city:'Milan',name:'Milan Malpensa',country:'Italy'},
+  {code:'LIN',city:'Milan Linate',name:'Linate Airport',country:'Italy'},
+  {code:'NAP',city:'Naples',name:'Naples International',country:'Italy'},
+  {code:'VCE',city:'Venice',name:'Marco Polo Airport',country:'Italy'},
+  {code:'ATH',city:'Athens',name:'Eleftherios Venizelos',country:'Greece'},
+  {code:'HER',city:'Heraklion',name:'Heraklion International',country:'Greece'},
+  {code:'RHO',city:'Rhodes',name:'Diagoras Airport',country:'Greece'},
+  {code:'IST',city:'Istanbul',name:'Istanbul Airport',country:'Turkey'},
+  {code:'SAW',city:'Istanbul Sabiha',name:'Sabiha Gökçen International',country:'Turkey'},
+  {code:'AYT',city:'Antalya',name:'Antalya Airport',country:'Turkey'},
+  {code:'ESB',city:'Ankara',name:'Esenboğa Airport',country:'Turkey'},
+  {code:'ADB',city:'Izmir',name:'Adnan Menderes Airport',country:'Turkey'},
+  {code:'OTP',city:'Bucharest',name:'Henri Coandă International',country:'Romania'},
+  {code:'SOF',city:'Sofia',name:'Sofia Airport',country:'Bulgaria'},
+  {code:'WAW',city:'Warsaw',name:'Warsaw Chopin Airport',country:'Poland'},
+  {code:'KRK',city:'Krakow',name:'John Paul II International',country:'Poland'},
+  {code:'PRG',city:'Prague',name:'Václav Havel Airport',country:'Czech Republic'},
+  {code:'BUD',city:'Budapest',name:'Budapest Liszt Ferenc',country:'Hungary'},
+  {code:'CPH',city:'Copenhagen',name:'Copenhagen Airport',country:'Denmark'},
+  {code:'OSL',city:'Oslo',name:'Oslo Gardermoen',country:'Norway'},
+  {code:'ARN',city:'Stockholm',name:'Stockholm Arlanda',country:'Sweden'},
+  {code:'HEL',city:'Helsinki',name:'Helsinki-Vantaa Airport',country:'Finland'},
+  {code:'RIX',city:'Riga',name:'Riga International',country:'Latvia'},
+  {code:'TLL',city:'Tallinn',name:'Tallinn Airport',country:'Estonia'},
+  {code:'VNO',city:'Vilnius',name:'Vilnius Airport',country:'Lithuania'},
+  // ── ASIA ──
   {code:'SIN',city:'Singapore',name:'Changi Airport',country:'Singapore'},
+  {code:'KUL',city:'Kuala Lumpur',name:'KL International (KLIA)',country:'Malaysia'},
+  {code:'KUL2',city:'Kuala Lumpur',name:'klia2 (AirAsia Hub)',country:'Malaysia'},
+  {code:'PEN',city:'Penang',name:'Penang International',country:'Malaysia'},
   {code:'BKK',city:'Bangkok',name:'Suvarnabhumi Airport',country:'Thailand'},
-  {code:'KUL',city:'Kuala Lumpur',name:'KL International',country:'Malaysia'},
+  {code:'DMK',city:'Bangkok Don Mueang',name:'Don Mueang International',country:'Thailand'},
+  {code:'HKT',city:'Phuket',name:'Phuket International',country:'Thailand'},
+  {code:'CNX',city:'Chiang Mai',name:'Chiang Mai International',country:'Thailand'},
+  {code:'CGK',city:'Jakarta',name:'Soekarno-Hatta International',country:'Indonesia'},
+  {code:'DPS',city:'Bali',name:'Ngurah Rai International',country:'Indonesia'},
+  {code:'SUB',city:'Surabaya',name:'Juanda International',country:'Indonesia'},
+  {code:'MNL',city:'Manila',name:'Ninoy Aquino International',country:'Philippines'},
+  {code:'CEB',city:'Cebu',name:'Mactan-Cebu International',country:'Philippines'},
+  {code:'SGN',city:'Ho Chi Minh City',name:'Tan Son Nhat International',country:'Vietnam'},
+  {code:'HAN',city:'Hanoi',name:'Noi Bai International',country:'Vietnam'},
+  {code:'DAD',city:'Da Nang',name:'Da Nang International',country:'Vietnam'},
+  {code:'PNH',city:'Phnom Penh',name:'Phnom Penh International',country:'Cambodia'},
+  {code:'REP',city:'Siem Reap',name:'Siem Reap International',country:'Cambodia'},
+  {code:'RGN',city:'Yangon',name:'Yangon International',country:'Myanmar'},
+  {code:'VTE',city:'Vientiane',name:'Wattay International',country:'Laos'},
   {code:'CMB',city:'Colombo',name:'Bandaranaike International',country:'Sri Lanka'},
+  {code:'MLE',city:'Malé',name:'Velana International',country:'Maldives'},
   {code:'DEL',city:'Delhi',name:'Indira Gandhi International',country:'India'},
-  {code:'BOM',city:'Mumbai',name:'Chhatrapati Shivaji',country:'India'},
+  {code:'BOM',city:'Mumbai',name:'Chhatrapati Shivaji Maharaj',country:'India'},
   {code:'MAA',city:'Chennai',name:'Chennai International',country:'India'},
   {code:'BLR',city:'Bangalore',name:'Kempegowda International',country:'India'},
   {code:'HYD',city:'Hyderabad',name:'Rajiv Gandhi International',country:'India'},
-  {code:'DPS',city:'Bali',name:'Ngurah Rai International',country:'Indonesia'},
-  {code:'CGK',city:'Jakarta',name:'Soekarno-Hatta',country:'Indonesia'},
-  {code:'MNL',city:'Manila',name:'Ninoy Aquino International',country:'Philippines'},
-  {code:'NRT',city:'Tokyo',name:'Narita International',country:'Japan'},
-  {code:'HND',city:'Tokyo Haneda',name:'Haneda Airport',country:'Japan'},
-  {code:'ICN',city:'Seoul',name:'Incheon International',country:'South Korea'},
-  {code:'HKG',city:'Hong Kong',name:'Hong Kong International',country:'Hong Kong'},
-  {code:'PEK',city:'Beijing',name:'Beijing Capital International',country:'China'},
-  {code:'PVG',city:'Shanghai',name:'Shanghai Pudong',country:'China'},
-  {code:'CAI',city:'Cairo',name:'Cairo International',country:'Egypt'},
-  {code:'JNB',city:'Johannesburg',name:'OR Tambo International',country:'South Africa'},
-  {code:'NBO',city:'Nairobi',name:'Jomo Kenyatta International',country:'Kenya'},
-  {code:'ADD',city:'Addis Ababa',name:'Bole International',country:'Ethiopia'},
-  {code:'LOS',city:'Lagos',name:'Murtala Muhammed International',country:'Nigeria'},
-  {code:'AMM',city:'Amman',name:'Queen Alia International',country:'Jordan'},
-  {code:'BEY',city:'Beirut',name:'Beirut Rafic Hariri International',country:'Lebanon'},
-  {code:'IST',city:'Istanbul',name:'Istanbul Airport',country:'Turkey'},
-  {code:'TLV',city:'Tel Aviv',name:'Ben Gurion International',country:'Israel'},
-  {code:'KWI',city:'Kuwait City',name:'Kuwait International',country:'Kuwait'},
-  {code:'BAH',city:'Manama',name:'Bahrain International',country:'Bahrain'},
-  {code:'ZRH',city:'Zurich',name:'Zurich Airport',country:'Switzerland'},
-  {code:'AMS',city:'Amsterdam',name:'Amsterdam Schiphol',country:'Netherlands'},
-  {code:'MAD',city:'Madrid',name:'Madrid-Barajas',country:'Spain'},
-  {code:'BCN',city:'Barcelona',name:'Barcelona El Prat',country:'Spain'},
-  {code:'MXP',city:'Milan',name:'Milan Malpensa',country:'Italy'},
-  {code:'FCO',city:'Rome',name:'Rome Fiumicino',country:'Italy'},
-  {code:'ATH',city:'Athens',name:'Athens International',country:'Greece'},
-  {code:'VIE',city:'Vienna',name:'Vienna International',country:'Austria'},
-  {code:'MLE',city:'Malé',name:'Velana International',country:'Maldives'},
-  {code:'SEZ',city:'Mahé',name:'Seychelles International',country:'Seychelles'},
+  {code:'CCU',city:'Kolkata',name:'Netaji Subhas Chandra Bose',country:'India'},
+  {code:'COK',city:'Kochi',name:'Cochin International',country:'India'},
+  {code:'TRV',city:'Thiruvananthapuram',name:'Trivandrum International',country:'India'},
+  {code:'AMD',city:'Ahmedabad',name:'Sardar Vallabhbhai Patel',country:'India'},
+  {code:'PNQ',city:'Pune',name:'Pune Airport',country:'India'},
+  {code:'GOI',city:'Goa',name:'Goa International (Dabolim)',country:'India'},
+  {code:'ATQ',city:'Amritsar',name:'Sri Guru Ram Dass Jee',country:'India'},
   {code:'KHI',city:'Karachi',name:'Jinnah International',country:'Pakistan'},
   {code:'LHE',city:'Lahore',name:'Allama Iqbal International',country:'Pakistan'},
-  {code:'ISB',city:'Islamabad',name:'Islamabad International',country:'Pakistan'},
+  {code:'ISB',city:'Islamabad',name:'New Islamabad International',country:'Pakistan'},
+  {code:'PEW',city:'Peshawar',name:'Bacha Khan International',country:'Pakistan'},
+  {code:'MUX',city:'Multan',name:'Multan International',country:'Pakistan'},
   {code:'DAC',city:'Dhaka',name:'Hazrat Shahjalal International',country:'Bangladesh'},
+  {code:'CGP',city:'Chittagong',name:'Shah Amanat International',country:'Bangladesh'},
   {code:'KTM',city:'Kathmandu',name:'Tribhuvan International',country:'Nepal'},
-  {code:'GRU',city:'São Paulo',name:'Guarulhos International',country:'Brazil'},
-  {code:'YYZ',city:'Toronto',name:'Toronto Pearson',country:'Canada'},
+  {code:'PBH',city:'Paro',name:'Paro Airport',country:'Bhutan'},
+  {code:'NRT',city:'Tokyo Narita',name:'Narita International',country:'Japan'},
+  {code:'HND',city:'Tokyo Haneda',name:'Haneda Airport',country:'Japan'},
+  {code:'KIX',city:'Osaka',name:'Kansai International',country:'Japan'},
+  {code:'ITM',city:'Osaka Itami',name:'Itami Airport',country:'Japan'},
+  {code:'CTS',city:'Sapporo',name:'New Chitose Airport',country:'Japan'},
+  {code:'FUK',city:'Fukuoka',name:'Fukuoka Airport',country:'Japan'},
+  {code:'ICN',city:'Seoul',name:'Incheon International',country:'South Korea'},
+  {code:'GMP',city:'Seoul Gimpo',name:'Gimpo International',country:'South Korea'},
+  {code:'PUS',city:'Busan',name:'Gimhae International',country:'South Korea'},
+  {code:'PEK',city:'Beijing',name:'Beijing Capital International',country:'China'},
+  {code:'PKX',city:'Beijing Daxing',name:'Beijing Daxing International',country:'China'},
+  {code:'PVG',city:'Shanghai',name:'Shanghai Pudong International',country:'China'},
+  {code:'SHA',city:'Shanghai Hongqiao',name:'Shanghai Hongqiao',country:'China'},
+  {code:'CAN',city:'Guangzhou',name:'Guangzhou Baiyun International',country:'China'},
+  {code:'SZX',city:'Shenzhen',name:'Shenzhen Bao'an International',country:'China'},
+  {code:'CTU',city:'Chengdu',name:'Chengdu Tianfu International',country:'China'},
+  {code:'HKG',city:'Hong Kong',name:'Hong Kong International',country:'Hong Kong'},
+  {code:'TPE',city:'Taipei',name:'Taiwan Taoyuan International',country:'Taiwan'},
+  {code:'TSA',city:'Taipei Songshan',name:'Songshan Airport',country:'Taiwan'},
+  {code:'MFM',city:'Macau',name:'Macau International',country:'Macau'},
+  // ── AFRICA ──
+  {code:'CAI',city:'Cairo',name:'Cairo International',country:'Egypt'},
+  {code:'HRG',city:'Hurghada',name:'Hurghada International',country:'Egypt'},
+  {code:'SSH',city:'Sharm El-Sheikh',name:'Sharm el-Sheikh International',country:'Egypt'},
+  {code:'LXR',city:'Luxor',name:'Luxor International',country:'Egypt'},
+  {code:'ALY',city:'Alexandria',name:'El Nouzha Airport',country:'Egypt'},
+  {code:'TUN',city:'Tunis',name:'Tunis-Carthage International',country:'Tunisia'},
+  {code:'ALG',city:'Algiers',name:'Houari Boumediene Airport',country:'Algeria'},
+  {code:'CMN',city:'Casablanca',name:'Mohammed V International',country:'Morocco'},
+  {code:'RAK',city:'Marrakech',name:'Menara Airport',country:'Morocco'},
+  {code:'TNG',city:'Tangier',name:'Ibn Batouta Airport',country:'Morocco'},
+  {code:'FEZ',city:'Fez',name:'Fès-Saïss Airport',country:'Morocco'},
+  {code:'NBO',city:'Nairobi',name:'Jomo Kenyatta International',country:'Kenya'},
+  {code:'MBA',city:'Mombasa',name:'Moi International',country:'Kenya'},
+  {code:'ADD',city:'Addis Ababa',name:'Bole International',country:'Ethiopia'},
+  {code:'JNB',city:'Johannesburg',name:'OR Tambo International',country:'South Africa'},
+  {code:'CPT',city:'Cape Town',name:'Cape Town International',country:'South Africa'},
+  {code:'DUR',city:'Durban',name:'King Shaka International',country:'South Africa'},
+  {code:'LOS',city:'Lagos',name:'Murtala Muhammed International',country:'Nigeria'},
+  {code:'ABV',city:'Abuja',name:'Nnamdi Azikiwe International',country:'Nigeria'},
+  {code:'ACC',city:'Accra',name:'Kotoka International',country:'Ghana'},
+  {code:'ABJ',city:'Abidjan',name:'Félix-Houphouët-Boigny',country:"Côte d'Ivoire"},
+  {code:'DAK',city:'Dakar',name:'Blaise Diagne International',country:'Senegal'},
+  {code:'DAR',city:'Dar es Salaam',name:'Julius Nyerere International',country:'Tanzania'},
+  {code:'ZNZ',city:'Zanzibar',name:'Abeid Amani Karume',country:'Tanzania'},
+  {code:'EBB',city:'Entebbe',name:'Entebbe International',country:'Uganda'},
+  {code:'KGL',city:'Kigali',name:'Kigali International',country:'Rwanda'},
+  // ── AMERICAS ──
+  {code:'JFK',city:'New York',name:'John F. Kennedy International',country:'USA'},
+  {code:'EWR',city:'Newark',name:'Newark Liberty International',country:'USA'},
+  {code:'LGA',city:'New York LaGuardia',name:'LaGuardia Airport',country:'USA'},
+  {code:'LAX',city:'Los Angeles',name:'Los Angeles International',country:'USA'},
+  {code:'SFO',city:'San Francisco',name:'San Francisco International',country:'USA'},
+  {code:'ORD',city:'Chicago',name:"O'Hare International",country:'USA'},
+  {code:'MDW',city:'Chicago Midway',name:'Midway International',country:'USA'},
+  {code:'MIA',city:'Miami',name:'Miami International',country:'USA'},
+  {code:'FLL',city:'Fort Lauderdale',name:'Fort Lauderdale-Hollywood',country:'USA'},
+  {code:'DFW',city:'Dallas',name:'Dallas/Fort Worth International',country:'USA'},
+  {code:'IAH',city:'Houston',name:'George Bush Intercontinental',country:'USA'},
+  {code:'ATL',city:'Atlanta',name:'Hartsfield-Jackson Atlanta',country:'USA'},
+  {code:'BOS',city:'Boston',name:'Logan International',country:'USA'},
+  {code:'SEA',city:'Seattle',name:'Seattle-Tacoma International',country:'USA'},
+  {code:'DEN',city:'Denver',name:'Denver International',country:'USA'},
+  {code:'LAS',city:'Las Vegas',name:'Harry Reid International',country:'USA'},
+  {code:'PHX',city:'Phoenix',name:'Phoenix Sky Harbor',country:'USA'},
+  {code:'YYZ',city:'Toronto',name:'Toronto Pearson International',country:'Canada'},
   {code:'YVR',city:'Vancouver',name:'Vancouver International',country:'Canada'},
+  {code:'YUL',city:'Montreal',name:'Montréal-Trudeau International',country:'Canada'},
+  {code:'YYC',city:'Calgary',name:'Calgary International',country:'Canada'},
+  {code:'GRU',city:'São Paulo',name:'Guarulhos International',country:'Brazil'},
+  {code:'GIG',city:'Rio de Janeiro',name:'Galeão International',country:'Brazil'},
+  {code:'BSB',city:'Brasília',name:'Brasília International',country:'Brazil'},
+  {code:'EZE',city:'Buenos Aires',name:'Ministro Pistarini International',country:'Argentina'},
+  {code:'AEP',city:'Buenos Aires City',name:'Jorge Newbery Airfield',country:'Argentina'},
+  {code:'SCL',city:'Santiago',name:'Arturo Merino Benítez',country:'Chile'},
+  {code:'LIM',city:'Lima',name:'Jorge Chávez International',country:'Peru'},
+  {code:'BOG',city:'Bogotá',name:'El Dorado International',country:'Colombia'},
+  {code:'MEX',city:'Mexico City',name:'Benito Juárez International',country:'Mexico'},
+  {code:'CUN',city:'Cancún',name:'Cancún International',country:'Mexico'},
+  {code:'GDL',city:'Guadalajara',name:'Miguel Hidalgo y Costilla',country:'Mexico'},
+  // ── AUSTRALIA / PACIFIC ──
+  {code:'SYD',city:'Sydney',name:'Kingsford Smith Airport',country:'Australia'},
+  {code:'MEL',city:'Melbourne',name:'Melbourne Airport (Tullamarine)',country:'Australia'},
+  {code:'BNE',city:'Brisbane',name:'Brisbane Airport',country:'Australia'},
+  {code:'PER',city:'Perth',name:'Perth Airport',country:'Australia'},
+  {code:'ADL',city:'Adelaide',name:'Adelaide Airport',country:'Australia'},
+  {code:'AKL',city:'Auckland',name:'Auckland Airport',country:'New Zealand'},
+  {code:'WLG',city:'Wellington',name:'Wellington Airport',country:'New Zealand'},
+  {code:'CHC',city:'Christchurch',name:'Christchurch Airport',country:'New Zealand'},
+  {code:'NAN',city:'Nadi',name:'Nadi International',country:'Fiji'},
+  {code:'PPT',city:'Papeete',name:'Faa'a International',country:'French Polynesia'},
+  // ── CENTRAL ASIA ──
+  {code:'TAS',city:'Tashkent',name:'Islam Karimov International',country:'Uzbekistan'},
+  {code:'ALA',city:'Almaty',name:'Almaty International',country:'Kazakhstan'},
+  {code:'NQZ',city:'Astana',name:'Nursultan Nazarbayev International',country:'Kazakhstan'},
+  {code:'TBS',city:'Tbilisi',name:'Tbilisi International',country:'Georgia'},
+  {code:'EVN',city:'Yerevan',name:'Zvartnots International',country:'Armenia'},
+  {code:'GYD',city:'Baku',name:'Heydar Aliyev International',country:'Azerbaijan'},
 ];
 
-const ALI={
+const ALI=const ALI={
   WY:{n:'Oman Air',cl:'logo-wy',cur:'OMR',r:0.385},
   QR:{n:'Qatar Airways',cl:'logo-qr',cur:'QAR',r:3.64},
   EK:{n:'Emirates',cl:'logo-ek',cur:'AED',r:3.67},
@@ -403,17 +563,34 @@ let S={
 // ══════════════════════════════════════════
 function acS(inp,lid){
   const l=document.getElementById(lid);
-  const q=inp.value.toLowerCase().trim();
-  if(!q){l.classList.remove('open');return;}
-  const hits=AP.filter(a=>a.code.toLowerCase().includes(q)||a.city.toLowerCase().includes(q)||a.name.toLowerCase().includes(q)||a.country.toLowerCase().includes(q)).slice(0,8);
-  if(!hits.length){l.classList.remove('open');return;}
-  l.innerHTML=hits.map(a=>`<div class="ai" onclick="selAP('${a.code}','${a.city}, ${a.country}','${inp.id}','${lid}')"><span class="ac-code">${a.code}</span><div><div style="font-size:12px;font-weight:600">${a.city}</div><div style="font-size:10px;color:var(--g400)">${a.name}</div></div></div>`).join('');
+  const q=inp.value.trim();
+  if(q.length < 2){l.classList.remove('open'); inp.dataset.code=''; return;}
+  const ql = q.toLowerCase();
+  const hits = AP.filter(a=>
+    a.code.toLowerCase().startsWith(ql) ||
+    a.city.toLowerCase().startsWith(ql) ||
+    a.name.toLowerCase().includes(ql) ||
+    a.country.toLowerCase().startsWith(ql) ||
+    a.code.toLowerCase().includes(ql) ||
+    a.city.toLowerCase().includes(ql)
+  ).slice(0,8);
+  if(!hits.length){l.classList.remove('open'); return;}
+  l.innerHTML = hits.map(a=>`
+    <div class="ai" onmousedown="selAP('${a.code}','${a.city}','${a.country}','${inp.id}','${lid}')">
+      <span class="ac-code">${a.code}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${a.city}</div>
+        <div style="font-size:10px;color:var(--g400)">${a.name} · ${a.country}</div>
+      </div>
+    </div>`).join('');
   l.classList.add('open');
 }
-function selAP(code,lbl,iid,lid){
-  const el=document.getElementById(iid);
-  el.value=`${code} — ${lbl}`;el.dataset.code=code;
-  document.getElementById(lid).classList.remove('open');
+
+function selAP(code, city, country, inputId, listId){
+  const el = document.getElementById(inputId);
+  el.value = `${city} (${code})`;
+  el.dataset.code = code;
+  document.getElementById(listId).classList.remove('open');
 }
 document.addEventListener('click',e=>{
   if(!e.target.closest('.fi')) document.querySelectorAll('.ac').forEach(l=>l.classList.remove('open'));
@@ -431,10 +608,10 @@ function setTrip(t,el){
   else{rf.style.display='none';sf.className='sf';}
 }
 function swapAp(){
-  const o=document.getElementById('orig'),d=document.getElementById('dest');
-  const ov=o.value,oc=o.dataset.code||'';
-  o.value=d.value;o.dataset.code=d.dataset.code||'';
-  d.value=ov;d.dataset.code=oc;
+  const o=document.getElementById('orig'), d=document.getElementById('dest');
+  const ov=o.value, oc=o.dataset.code||'';
+  o.value=d.value; o.dataset.code=d.dataset.code||'';
+  d.value=ov; d.dataset.code=oc;
 }
 function togglePax(){document.getElementById('paxDrop').classList.toggle('open');}
 function chPax(t,d2){
@@ -610,11 +787,27 @@ function parseFlights(data, cabin, depDate){
 
 
 async function doSearch(){
-  const oc=document.getElementById('orig').dataset.code;
-  const dc=document.getElementById('dest').dataset.code;
-  const dep=document.getElementById('depDate').value;
-  const ret=document.getElementById('retDate').value;
-  if(!oc||!dc){alert('الرجاء تحديد مطار المغادرة والوصول');return;}
+  const origEl = document.getElementById('orig');
+  const destEl = document.getElementById('dest');
+  // Get code from dataset (set by autocomplete) OR extract from value like "Dubai (DXB)"
+  function extractCode(el){
+    if(el.dataset.code) return el.dataset.code;
+    const v = el.value.trim().toUpperCase();
+    // Match "(DXB)" pattern
+    const m = v.match(/\(([A-Z]{3})\)/);
+    if(m) return m[1];
+    // Direct 3-letter code
+    if(v.match(/^[A-Z]{3}$/)) return v;
+    return null;
+  }
+  const oc = extractCode(origEl);
+  const dc = extractCode(destEl);
+  const dep = document.getElementById('depDate').value;
+  const ret = document.getElementById('retDate').value;
+  if(!oc){alert('الرجاء اختيار مطار المغادرة من القائمة');return;}
+  if(!dc){alert('الرجاء اختيار مطار الوصول من القائمة');return;}
+  origEl.dataset.code = oc;
+  destEl.dataset.code = dc;
   if(!dep){alert('الرجاء تحديد تاريخ المغادرة');return;}
   if(S.trip==='rt'&&!ret){alert('الرجاء تحديد تاريخ العودة');return;}
   if(oc===dc){alert('المطار الأصلي والوجهة لا يمكن أن يكونا نفس المطار');return;}
