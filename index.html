@@ -1055,70 +1055,301 @@ function renderConf(){
 // E-TICKET
 // ══════════════════════════════════════════
 function issueTicket(){
-  const f=S.selO,p=S.pax[0];
-  const al=alInfo(f.airline);
-  const{b,tx,yq,tot}=calcTotal();
-  const tnum=genTN(f.airline);
-  const idate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
-  const th={WY:{h:'#B41E1E',s:'#8B1212',l:'#FFF0F0'},QR:{h:'#6E1030',s:'#4A0B20',l:'#FFF0F7'},EK:{h:'#8C6418',s:'#5A3E08',l:'#FFFBEE'},SV:{h:'#006837',s:'#004d28',l:'#F0FFF5'}}[f.airline]||{h:'#334155',s:'#1e293b',l:'#f8fafc'};
-  const LOGOS={
-    WY:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="160" height="46"><rect width="200" height="56" rx="7" fill="#B41E1E"/><text x="12" y="34" font-family="Arial" font-size="24" font-weight="900" fill="white">OMAN AIR</text><text x="12" y="49" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.7)" letter-spacing="2">الطيران العُماني</text><circle cx="180" cy="20" r="14" fill="white" opacity="0.12"/><text x="180" y="25" font-family="Arial" font-size="12" font-weight="900" fill="white" text-anchor="middle">WY</text></svg>`,
-    QR:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="160" height="46"><rect width="200" height="56" rx="7" fill="#6E1030"/><text x="12" y="32" font-family="Arial" font-size="18" font-weight="900" fill="white">QATAR AIRWAYS</text><text x="12" y="49" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.7)" letter-spacing="2">القطرية</text><path d="M178 8 L192 16 L192 32 L178 40 L164 32 L164 16 Z" fill="none" stroke="white" stroke-width="1.5" opacity="0.35"/><text x="178" y="28" font-family="Arial" font-size="10" font-weight="900" fill="white" text-anchor="middle">QR</text></svg>`,
-    EK:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="160" height="46"><rect width="200" height="56" rx="7" fill="#8C6418"/><text x="12" y="34" font-family="Arial" font-size="22" font-weight="900" fill="white" letter-spacing="2">EMIRATES</text><text x="12" y="49" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.7)" letter-spacing="2">طيران الإمارات</text><rect x="158" y="9" width="34" height="38" rx="4" fill="white" opacity="0.1"/><text x="175" y="32" font-family="Arial" font-size="13" font-weight="900" fill="white" text-anchor="middle">EK</text></svg>`,
-    SV:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="160" height="46"><rect width="200" height="56" rx="7" fill="#006837"/><text x="12" y="34" font-family="Arial" font-size="24" font-weight="900" fill="white">SAUDIA</text><text x="12" y="49" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.7)" letter-spacing="2">الخطوط السعودية</text><circle cx="178" cy="22" r="16" fill="none" stroke="white" stroke-width="1.5" opacity="0.28"/><text x="178" y="27" font-family="Arial" font-size="12" font-weight="900" fill="white" text-anchor="middle">SV</text></svg>`,
-  };
-  const logo=LOGOS[f.airline]||`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" width="160" height="46"><rect width="200" height="56" rx="7" fill="#334155"/><text x="12" y="34" font-family="Arial" font-size="22" font-weight="900" fill="white">${al.n.toUpperCase()}</text></svg>`;
-  const bks=S.selR?[S.selO,S.selR]:[S.selO];
-  let legs='';
-  bks.forEach(fl=>{
-    const fal=alInfo(fl.airline);
-    const bag=fl.cabin==='FIRST'?'50 KG':fl.cabin==='BUSINESS'?'32 KG':'23 KG';
-    const ctxt={ECONOMY:'Economy',PREMIUM_ECONOMY:'Premium Economy',BUSINESS:'Business',FIRST:'First Class'}[fl.cabin]||fl.cabin;
-    legs+=`<tr style="background:#F8FAFF"><td style="padding:10px 12px;font-weight:700;font-family:monospace;color:${th.h};font-size:12px">${fl.flightNum}</td><td style="padding:10px 8px;font-size:10px;color:#555">${fal.n}<br><span style="color:#999">${fl.aircraft||''}</span></td><td style="padding:10px 8px;text-align:center"><span style="font-size:18px;font-weight:800;color:${th.h}">${fl.from}</span><br><span style="font-size:9px;color:#777">${fl.fromCity}</span><br><span style="font-family:monospace;font-size:13px;font-weight:700">${fl.depTime}</span><br><span style="font-size:9px;color:#999">${fd(fl.depDate)}</span></td><td style="padding:10px 5px;text-align:center;color:#aaa;font-size:20px">✈</td><td style="padding:10px 8px;text-align:center"><span style="font-size:18px;font-weight:800;color:${th.h}">${fl.to}</span><br><span style="font-size:9px;color:#777">${fl.toCity}</span><br><span style="font-family:monospace;font-size:13px;font-weight:700">${fl.arrTime}</span></td><td style="padding:10px 8px;text-align:center;font-size:10px;color:#555">${fl.duration}<br><span style="color:#888">${ctxt}</span></td><td style="padding:10px 12px;text-align:center"><span style="font-family:monospace;font-size:14px;font-weight:800;color:${th.h}">${p.seat||'14A'}</span><br><span style="font-size:9px;color:#777">Seat</span><br><span style="font-size:9px;color:#555">${bag}</span><br><span style="font-size:9px;font-weight:700;color:#16a34a">OK</span></td></tr><tr><td colspan="7" style="height:2px;background:#eee;padding:0"></td></tr>`;
+  const f  = S.selO;
+  const p  = S.pax[0];
+  const al = alInfo(f.airline);
+  const {b, tx, yq, tot} = calcTotal();
+  const tnum  = genTN(f.airline);
+  const idate = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+  const th = {
+    WY:{h:'#B41E1E',s:'#8B1212',bg:'#fff5f5'},
+    QR:{h:'#6E1030',s:'#4A0B20',bg:'#fff5f8'},
+    EK:{h:'#8C6418',s:'#5A3E08',bg:'#fffdf0'},
+    SV:{h:'#006837',s:'#004d28',bg:'#f0fff6'},
+  }[f.airline] || {h:'#1e3a5f',s:'#0f2035',bg:'#f5f8ff'};
+
+  // ── Build all flight segments (outbound + return if any) ──
+  const bookings = S.selR ? [S.selO, S.selR] : [S.selO];
+
+  function buildSegments(flight){
+    const segs = [];
+    if(flight.stops > 0 && flight.leg1 && flight.leg2){
+      segs.push({
+        fn:       flight.leg1.flightNum || flight.flightNum,
+        airline:  flight.airlineName,
+        from:     flight.leg1.from,
+        fromCity: flight.leg1.fromCity || getCity(flight.leg1.from),
+        to:       flight.leg1.to,
+        toCity:   flight.leg1.toCity || getCity(flight.leg1.to),
+        dep:      flight.leg1.dep,
+        arr:      flight.leg1.arr,
+        dur:      flight.leg1.dur,
+        aircraft: flight.leg1.aircraft || flight.aircraft,
+        date:     flight.depDate,
+        isLayover:false
+      });
+      const layMins = flight.layoverMins;
+      const layStr  = layMins ? Math.floor(layMins/60)+'h '+String(layMins%60).padStart(2,'0')+'m' : '';
+      segs.push({isLayover:true, airport: flight.via, city: flight.viaCity||flight.via, duration: layStr});
+      segs.push({
+        fn:       flight.leg2.flightNum,
+        airline:  flight.airlineName,
+        from:     flight.leg2.from,
+        fromCity: flight.leg2.fromCity || getCity(flight.leg2.from),
+        to:       flight.leg2.to,
+        toCity:   flight.leg2.toCity || getCity(flight.leg2.to),
+        dep:      flight.leg2.dep,
+        arr:      flight.leg2.arr,
+        dur:      flight.leg2.dur,
+        aircraft: flight.leg2.aircraft || flight.aircraft,
+        date:     flight.depDate,
+        isLayover:false
+      });
+    } else {
+      segs.push({
+        fn:       flight.flightNum,
+        airline:  flight.airlineName,
+        from:     flight.from,
+        fromCity: flight.fromCity,
+        to:       flight.to,
+        toCity:   flight.toCity,
+        dep:      flight.depTime,
+        arr:      flight.arrTime,
+        dur:      flight.duration,
+        aircraft: flight.aircraft,
+        date:     flight.depDate,
+        isLayover:false
+      });
+    }
+    return segs;
+  }
+
+  function segRow(seg, color){
+    if(seg.isLayover) return `
+      <tr>
+        <td colspan="6" style="padding:0">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 16px;background:#fef9ec;border-top:1px dashed #fcd34d;border-bottom:1px dashed #fcd34d;">
+            <span style="font-size:14px">🕐</span>
+            <span style="font-size:11px;color:#92400e;font-weight:600">Layover at ${seg.city} (${seg.airport})</span>
+            ${seg.duration ? '<span style="font-size:11px;color:#b45309;margin-left:auto;font-weight:700">'+seg.duration+'</span>' : ''}
+          </div>
+        </td>
+      </tr>`;
+    return `
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:12px 16px;vertical-align:top;">
+          <div style="font-family:monospace;font-size:13px;font-weight:800;color:${color};letter-spacing:1px">${seg.fn}</div>
+          <div style="font-size:10px;color:#888;margin-top:2px">${seg.airline}</div>
+          <div style="font-size:10px;color:#aaa;margin-top:1px">${seg.aircraft||''}</div>
+        </td>
+        <td style="padding:12px 16px;vertical-align:top;text-align:center">
+          <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:-1px;color:#1a2035">${seg.dep}</div>
+          <div style="font-size:13px;font-weight:700;color:${color};margin-top:2px">${seg.from}</div>
+          <div style="font-size:10px;color:#666">${seg.fromCity}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">${fd(seg.date)}</div>
+        </td>
+        <td style="padding:12px 8px;vertical-align:middle;text-align:center;min-width:120px">
+          <div style="font-size:10px;color:#999;margin-bottom:4px">${seg.dur||''}</div>
+          <div style="display:flex;align-items:center;gap:0">
+            <div style="flex:1;height:1.5px;background:linear-gradient(90deg,#ddd,${color})"></div>
+            <span style="font-size:14px;color:${color}">✈</span>
+            <div style="flex:1;height:1.5px;background:linear-gradient(90deg,${color},#ddd)"></div>
+          </div>
+        </td>
+        <td style="padding:12px 16px;vertical-align:top;text-align:center">
+          <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:-1px;color:#1a2035">${seg.arr}</div>
+          <div style="font-size:13px;font-weight:700;color:${color};margin-top:2px">${seg.to}</div>
+          <div style="font-size:10px;color:#666">${seg.toCity}</div>
+        </td>
+        <td style="padding:12px 16px;vertical-align:top;text-align:center">
+          <div style="font-size:11px;font-weight:600;color:#555">${seg.dur||'—'}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">Duration</div>
+        </td>
+        <td style="padding:12px 16px;vertical-align:top;text-align:center">
+          <div style="font-size:13px;font-weight:800;font-family:monospace;color:${color}">${p.seat||'14A'}</div>
+          <div style="font-size:10px;color:#999;margin-top:2px">Seat</div>
+          <div style="font-size:10px;font-weight:700;color:#16a34a;margin-top:2px">OK</div>
+        </td>
+      </tr>`;
+  }
+
+  // Build all segments HTML
+  let allSegsHtml = '';
+  bookings.forEach((bk, bi) => {
+    const segs = buildSegments(bk);
+    const fal  = alInfo(bk.airline);
+    const stops = bk.stops > 0 ? bk.stops+' stop'+(bk.stops>1?'s':'') : 'Non-stop';
+    const cabinTxt = {ECONOMY:'Economy',PREMIUM_ECONOMY:'Premium Economy',BUSINESS:'Business Class',FIRST:'First Class'}[bk.cabin]||bk.cabin;
+    const bag = bk.cabin==='FIRST'?'50 KG':bk.cabin==='BUSINESS'?'32 KG':'23 KG';
+    allSegsHtml += `
+      <tr style="background:${th.s}">
+        <td colspan="6" style="padding:8px 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:white;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase">
+              ${bi===0?'✈ Outbound Flight':'↩ Return Flight'} — ${bk.from} to ${bk.to}
+            </span>
+            <span style="color:rgba(255,255,255,.7);font-size:10px">${stops} · ${cabinTxt} · Baggage: ${bag}</span>
+          </div>
+        </td>
+      </tr>
+      ${segs.map(s=>segRow(s, th.h)).join('')}`;
   });
-  const bars=[3,1,2,1,3,2,1,3,1,2,3,1,2,1,3,1,2,3,1,2,1,3,2,1,3,2];
-  let bsvg=`<svg xmlns="http://www.w3.org/2000/svg" width="190" height="34">`;
-  let bx=0;bars.forEach((w,i)=>{if(i%2===0) bsvg+=`<rect x="${bx}" y="0" width="${w*2.8}" height="26" fill="#222"/>`;bx+=w*2.8+1;});
-  bsvg+=`<text x="0" y="34" font-family="monospace" font-size="7" fill="#666">${tnum.replace(/-/g,'')}</text></svg>`;
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${S.pnr} E-Ticket</title>
-<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial,sans-serif;background:#f0f3f8;}.page{max-width:800px;margin:20px auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15);}.hdr{background:${th.h};color:white;padding:20px 26px 14px;}.ht{display:flex;justify-content:space-between;align-items:flex-start;}.an{font-size:22px;font-weight:900;margin-top:8px;}.tt{font-size:9.5px;opacity:.8;margin-top:2px;letter-spacing:2px;text-transform:uppercase;}.tm{text-align:right;font-size:10px;opacity:.85;line-height:1.75;}.tn{font-family:monospace;font-size:13px;font-weight:700;}.sb2{background:${th.s};color:rgba(255,255,255,.65);padding:6px 26px;font-size:9.5px;letter-spacing:1px;display:flex;justify-content:space-between;}.pb{background:${th.l};border-bottom:2px solid ${th.h};padding:11px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;}.pl2{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;}.pv{font-family:monospace;font-size:22px;font-weight:900;color:${th.h};letter-spacing:6px;}.sok{background:#16a34a;color:white;padding:3px 13px;border-radius:20px;font-size:11px;font-weight:700;}.sh{background:${th.h};color:white;padding:6px 26px;font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}.pg{display:grid;grid-template-columns:1fr 1fr 1fr;}.pc{padding:8px 11px;border-bottom:1px solid #f0f0f0;}.pc:nth-child(even){background:#f9fafb;}.plb{font-size:8.5px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}.pv2{font-size:11.5px;font-weight:600;color:#222;}table.fl{width:100%;border-collapse:collapse;}table.fl th{background:${th.s};color:white;padding:6px 10px;font-size:8.5px;letter-spacing:1px;text-align:left;}.ft{width:100%;border-collapse:collapse;}.ft td{padding:7px 26px;font-size:11px;border-bottom:1px solid #f0f0f0;}.ft td:last-child{text-align:right;font-weight:600;}.ftot{background:${th.h};color:white;}.ftot td{padding:9px 26px;font-size:13px;font-weight:700;border-bottom:none;}.footer{background:${th.h};color:rgba(255,255,255,.65);text-align:center;padding:9px;font-size:8.5px;letter-spacing:1px;}@media print{body{background:white;}.page{box-shadow:none;margin:0;border-radius:0;max-width:100%;}}</style>
-</head><body>
-<div class="page">
-<div class="hdr"><div class="ht"><div style="display:flex;align-items:center;gap:16px">${logo}<div><div class="an">${al.n.toUpperCase()}</div><div class="tt">Electronic Ticket / Itinerary Receipt</div></div></div><div class="tm"><div class="tn">${tnum}</div><div>Ticket Number</div><div style="margin-top:3px">Issue Date: ${idate}</div><div>Issuing Office: TS-001</div></div></div></div>
-<div class="sb2"><span>${al.n.toUpperCase()} · IATA: ${f.airline}</span><span>skyfly.aero</span></div>
-<div class="pb"><div><div class="pl2">Booking Reference (PNR)</div><div class="pv">${S.pnr}</div></div><div><span class="sok">✓ CONFIRMED</span></div></div>
-<div class="sh">Passenger Information</div>
-<div class="pg">
-<div class="pc"><div class="plb">Passenger Name</div><div class="pv2">${p.title} ${p.fname.toUpperCase()} ${p.lname.toUpperCase()}</div></div>
-<div class="pc"><div class="plb">Date of Birth</div><div class="pv2">${p.dob||'—'}</div></div>
-<div class="pc"><div class="plb">Nationality</div><div class="pv2">${p.nationality||'—'}</div></div>
-<div class="pc"><div class="plb">Passport Number</div><div class="pv2" style="font-family:monospace">${p.passport||'—'}</div></div>
-<div class="pc"><div class="plb">Passport Expiry</div><div class="pv2">${p.passExpiry||'—'}</div></div>
-<div class="pc"><div class="plb">Contact Email</div><div class="pv2">${p.email||'—'}</div></div>
-<div class="pc"><div class="plb">Phone</div><div class="pv2">${p.phone||'—'}</div></div>
-<div class="pc"><div class="plb">Frequent Flyer</div><div class="pv2" style="font-family:monospace">${p.ffn||'N/A'}</div></div>
-<div class="pc"><div class="plb">Requests</div><div class="pv2">${p.special||p.meal||'None'}</div></div>
+
+  // Barcode SVG
+  const bars=[3,1,2,1,3,2,1,3,1,2,3,1,2,1,3,1,2,3,1,2,1,3,2,1,3,2,1,3,1,2];
+  let bsvg='<svg xmlns="http://www.w3.org/2000/svg" width="220" height="50">';
+  let bx=0;
+  bars.forEach((w,i)=>{
+    if(i%2===0) bsvg+=`<rect x="${bx}" y="0" width="${w*3}" height="38" fill="#1a2035"/>`;
+    bx+=w*3+1.5;
+  });
+  bsvg+=`<text x="0" y="48" font-family="monospace" font-size="8" fill="#666">${tnum.replace(/-/g,'')}</text></svg>`;
+
+  // All passengers rows
+  let paxRows = S.pax.map((px,i)=>`
+    <tr style="${i%2?'background:#f9fafb':''}">
+      <td style="padding:8px 12px;font-size:12px;font-weight:600">${px.title} ${px.fname.toUpperCase()} ${px.lname.toUpperCase()}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#555">${px.dob||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#555">${px.nationality||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;font-family:monospace">${px.passport||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#555">${px.email||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;color:#555">${px.meal||'Standard'}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>E-Ticket ${S.pnr} — ${p.lname.toUpperCase()}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,sans-serif;background:#eef2f7;padding:20px;}
+.ticket{max-width:860px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15);}
+.hdr{background:${th.h};padding:20px 28px;display:flex;align-items:flex-start;justify-content:space-between;}
+.hdr-left{display:flex;align-items:center;gap:16px;}
+.airline-logo{width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.airline-logo img{width:100%;height:100%;object-fit:contain;padding:4px;}
+.hdr-title{color:white;}
+.hdr-title h1{font-size:18px;font-weight:800;letter-spacing:.5px;}
+.hdr-title p{font-size:10px;opacity:.75;margin-top:3px;letter-spacing:1.5px;text-transform:uppercase;}
+.hdr-right{text-align:right;color:rgba(255,255,255,.85);}
+.tnum{font-family:monospace;font-size:14px;font-weight:700;color:white;}
+.status-bar{background:${th.s};padding:10px 28px;display:flex;align-items:center;justify-content:space-between;}
+.pnr-section{background:${th.bg};border-bottom:2px solid ${th.h};padding:16px 28px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+.pnr-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.pnr-value{font-family:monospace;font-size:26px;font-weight:900;color:${th.h};letter-spacing:6px;}
+.confirmed{background:#16a34a;color:white;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;}
+.sec-hdr{background:${th.h};color:white;padding:8px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+table{width:100%;border-collapse:collapse;}
+table th{background:${th.s};color:white;padding:8px 16px;font-size:9px;letter-spacing:1px;text-align:left;text-transform:uppercase;}
+.footer{background:${th.h};color:rgba(255,255,255,.65);text-align:center;padding:12px;font-size:9px;letter-spacing:1px;}
+.notice{padding:14px 28px;background:#f8faff;display:flex;gap:20px;border-top:1px solid #eee;}
+@media print{body{background:white;padding:0;}.ticket{box-shadow:none;border-radius:0;max-width:100%;}}
+</style>
+</head>
+<body>
+<div class="ticket">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="airline-logo">
+        <img src="https://pics.avs.io/90/36/${f.airline}.png"
+             onerror="this.src='';this.parentNode.innerHTML='<span style=\'color:white;font-weight:900;font-size:16px\'>${f.airline}</span>'"
+             alt="${f.airline}">
+      </div>
+      <div class="hdr-title">
+        <h1>${al.n.toUpperCase()}</h1>
+        <p>Electronic Ticket / Itinerary Receipt · التذكرة الإلكترونية</p>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="tnum">${tnum}</div>
+      <div style="font-size:10px;margin-top:4px">Ticket Number</div>
+      <div style="font-size:10px;margin-top:2px">Issued: ${idate}</div>
+      <div style="font-size:10px;margin-top:1px;opacity:.7">Via Otlah Travel</div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span style="color:rgba(255,255,255,.8);font-size:10px;letter-spacing:1px">${al.n.toUpperCase()} · IATA: ${f.airline} · OTLAH TRAVEL · عطلة للسفر</span>
+    <span style="color:rgba(255,255,255,.6);font-size:10px">otlahtravel.com</span>
+  </div>
+
+  <!-- PNR SECTION -->
+  <div class="pnr-section">
+    <div>
+      <div class="pnr-label">Booking Reference (PNR)</div>
+      <div class="pnr-value">${S.pnr}</div>
+    </div>
+    <div><span class="confirmed">✓ CONFIRMED</span></div>
+    <div style="margin-left:auto;text-align:right">
+      <div class="pnr-label">Issue Date</div>
+      <div style="font-size:13px;font-weight:700;color:#333">${idate}</div>
+    </div>
+  </div>
+
+  <!-- PASSENGER DETAILS -->
+  <div class="sec-hdr">Passenger Information · معلومات المسافر</div>
+  <table>
+    <thead><tr>
+      <th>Passenger Name</th><th>Date of Birth</th><th>Nationality</th>
+      <th>Passport No.</th><th>Email</th><th>Meal</th>
+    </tr></thead>
+    <tbody>${paxRows}</tbody>
+  </table>
+
+  <!-- FLIGHT ITINERARY -->
+  <div class="sec-hdr" style="margin-top:1px">Flight Itinerary · تفاصيل الرحلة</div>
+  <table>
+    <thead><tr>
+      <th>Flight</th><th>Departure</th><th style="text-align:center">Route</th>
+      <th>Arrival</th><th>Duration</th><th>Seat / Status</th>
+    </tr></thead>
+    <tbody>${allSegsHtml}</tbody>
+  </table>
+
+  <!-- FARE BREAKDOWN -->
+  <div class="sec-hdr" style="margin-top:1px">Fare Details · تفاصيل السعر</div>
+  <table>
+    <tbody>
+      <tr><td style="padding:8px 16px;font-size:11px">Base Fare</td><td style="padding:8px 16px;font-size:11px;text-align:right">USD ${b.toLocaleString()}</td></tr>
+      <tr style="background:#f9fafb"><td style="padding:8px 16px;font-size:11px">Taxes & Fees (XT)</td><td style="padding:8px 16px;font-size:11px;text-align:right">USD ${tx.toLocaleString()}</td></tr>
+      <tr><td style="padding:8px 16px;font-size:11px">Fuel Surcharge (YQ)</td><td style="padding:8px 16px;font-size:11px;text-align:right">USD ${yq.toLocaleString()}</td></tr>
+      <tr style="background:${th.h}"><td style="padding:10px 16px;font-size:14px;font-weight:800;color:white">TOTAL AMOUNT PAID</td><td style="padding:10px 16px;font-size:14px;font-weight:800;color:white;text-align:right">USD ${tot.toLocaleString()}</td></tr>
+    </tbody>
+  </table>
+
+  <!-- BARCODE + NOTICES -->
+  <div class="notice">
+    <div>${bsvg}</div>
+    <div style="font-size:9.5px;color:#555;line-height:2;flex:1">
+      <strong style="color:${th.h};font-size:10px">IMPORTANT INFORMATION · معلومات مهمة</strong><br>
+      • Check in at least 3 hours before international departure · تسجيل الوصول قبل 3 ساعات على الأقل<br>
+      • Carry a valid passport and this ticket to the airport · إحضار جواز سفر ساري المفعول<br>
+      • This ticket is non-transferable · هذه التذكرة غير قابلة للتحويل<br>
+      • Online check-in available 48 hours before departure · تسجيل الوصول الإلكتروني متاح قبل 48 ساعة
+    </div>
+  </div>
+
+  <div class="footer">${al.n.toUpperCase()} · E-TICKET · ${S.pnr} · OTLAH TRAVEL — عطلة للسفر</div>
 </div>
-<div class="sh" style="margin-top:1px">Flight Itinerary</div>
-<table class="fl"><thead><tr><th>Flight</th><th>Carrier</th><th>Departure</th><th></th><th>Arrival</th><th>Duration/Class</th><th style="text-align:center">Seat/Bag</th></tr></thead><tbody>${legs}</tbody></table>
-<div class="sh" style="margin-top:1px">Fare Details</div>
-<table class="ft">
-<tr><td>Base Fare</td><td>USD ${b.toLocaleString()}</td></tr>
-<tr><td>Airport & Government Taxes (XT)</td><td>USD ${tx.toLocaleString()}</td></tr>
-<tr><td>Fuel Surcharge (YQ)</td><td>USD ${yq.toLocaleString()}</td></tr>
-<tr class="ftot"><td>TOTAL AMOUNT PAID</td><td>USD ${tot.toLocaleString()}</td></tr>
-</table>
-<div style="padding:12px 26px 6px;display:flex;align-items:flex-start;gap:28px;background:#fafafa;border-top:1px solid #eee">
-<div>${bsvg}</div>
-<div style="flex:1;font-size:9.5px;color:#666;line-height:1.9"><strong style="color:${th.h}">IMPORTANT INFORMATION</strong><br>• Check in at least 3 hours before international departure.<br>• Carry a valid passport and this itinerary to the airport.<br>• This ticket is non-transferable. Name changes are not permitted.<br>• Online check-in available 48 hours before departure.</div>
+<div style="text-align:center;margin-top:14px">
+  <button onclick="window.print()" style="background:${th.h};color:white;border:none;padding:10px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🖨️ Print / Save as PDF</button>
 </div>
-<div class="footer">${al.n.toUpperCase()} · E-TICKET · ${S.pnr}</div>
-</div></body></html>`;
-  const blob=new Blob([html],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  const win=window.open(url,'_blank');
-  if(!win){const a=document.createElement('a');a.href=url;a.download=`${S.pnr}-${p.lname.toUpperCase()}-eTicket.html`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
-  setTimeout(()=>URL.revokeObjectURL(url),120000);
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if(!win){
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${S.pnr}-${p.lname.toUpperCase()}-eTicket.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  setTimeout(()=>URL.revokeObjectURL(url), 120000);
 }
 
 function genTN(c){const p={WY:'910',QR:'157',EK:'176',SV:'065'};return `${p[c]||'000'}-${Math.floor(1e9+Math.random()*9e9)}`;}
