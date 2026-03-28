@@ -1326,18 +1326,39 @@ let currentUserData = null;
 
 auth.onAuthStateChanged(async (user) => {
   if (user) {
-    // Get user data from Firestore
-    const doc = await db.collection('users').doc(user.uid).get();
-    if (!doc.exists || doc.data().active === false) {
-      await auth.signOut();
-      showLoginErr('Your account has been disabled. Please contact admin.');
-      return;
+    try {
+      const doc = await db.collection('users').doc(user.uid).get();
+      let userData = doc.exists ? doc.data() : null;
+
+      // Block if explicitly disabled
+      if (userData && userData.active === false) {
+        await auth.signOut();
+        showLoginErr('Your account has been disabled. Contact admin.');
+        return;
+      }
+
+      // Block admins from booking system
+      if (userData && userData.role === 'admin') {
+        await auth.signOut();
+        showLoginErr('Admin accounts use /admin panel.');
+        return;
+      }
+
+      currentUser = user;
+      currentUserData = userData || { email: user.email, displayName: user.email };
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('userNameDisplay').textContent =
+        currentUserData.displayName || currentUserData.username || user.email;
+    } catch(e) {
+      console.error('Auth state error:', e);
+      // Allow login even if Firestore fails
+      currentUser = user;
+      currentUserData = { email: user.email, displayName: user.email };
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('userNameDisplay').textContent = user.email;
     }
-    currentUser = user;
-    currentUserData = doc.data();
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('userNameDisplay').textContent = currentUserData.displayName || currentUserData.username || user.email;
   } else {
     currentUser = null;
     currentUserData = null;
@@ -1347,40 +1368,50 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 async function doLogin() {
-  const usernameOrEmail = document.getElementById('loginUser').value.trim();
-  const password        = document.getElementById('loginPass').value.trim();
-  if (!usernameOrEmail || !password) { showLoginErr('Please enter username and password'); return; }
+  const input    = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value.trim();
+  if (!input || !password) { showLoginErr('Please enter username and password'); return; }
 
   document.querySelector('.login-btn').textContent = 'Signing in...';
   document.querySelector('.login-btn').disabled = true;
 
   try {
-    let email = usernameOrEmail;
-    let userData = null;
+    let email = input;
 
-    // Check if input is email or username
-    if (!usernameOrEmail.includes('@')) {
-      // It's a username — look up email
-      const snap = await db.collection('users').where('username','==',usernameOrEmail).limit(1).get();
+    // If username (no @), look up the email
+    if (!input.includes('@')) {
+      const snap = await db.collection('users').where('username','==',input).limit(1).get();
       if (snap.empty) { showLoginErr('Invalid username or password'); resetLoginBtn(); return; }
-      userData = snap.docs[0].data();
-      email = userData.email;
-    } else {
-      // It's an email — look up user data
-      const snap = await db.collection('users').where('email','==',usernameOrEmail).limit(1).get();
-      if (!snap.empty) userData = snap.docs[0].data();
+      const data = snap.docs[0].data();
+      if (data.active === false) { showLoginErr('Account disabled. Contact admin.'); resetLoginBtn(); return; }
+      email = data.email;
     }
 
-    // Check if disabled
-    if (userData && userData.active === false) {
-      showLoginErr('This account has been disabled. Contact admin.');
+    // Sign in with Firebase Auth
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+
+    // Verify user exists in Firestore (by UID)
+    const doc = await db.collection('users').doc(cred.user.uid).get();
+    if (!doc.exists) {
+      // User exists in Auth but not Firestore - still allow (admin created)
+      // Create a basic doc
+      await db.collection('users').doc(cred.user.uid).set({
+        email: cred.user.email,
+        username: cred.user.email.split('@')[0],
+        displayName: cred.user.email.split('@')[0],
+        role: 'user', active: true,
+        bookingCount: 0, totalCost: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else if (doc.data().active === false) {
+      await auth.signOut();
+      showLoginErr('Account disabled. Contact admin.');
       resetLoginBtn(); return;
     }
 
-    // Sign in
-    await auth.signInWithEmailAndPassword(email, password);
     document.getElementById('loginErr').classList.remove('show');
   } catch(e) {
+    console.error('Login error:', e.code, e.message);
     showLoginErr('Invalid username or password');
     resetLoginBtn();
   }
