@@ -267,7 +267,7 @@ async function loadDashboard() {
       db.collection('users').get(),
       db.collection('bookings').orderBy('createdAt','desc').limit(20).get()
     ]);
-    const users    = uSnap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== 'admin');
+    const users    = uSnap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== 'admin' && u.email);
     const bookings = bSnap.docs.map(d => ({id:d.id,...d.data()}));
 
     document.getElementById('sUsers').textContent    = users.length;
@@ -293,9 +293,10 @@ async function loadDashboard() {
 async function loadUsers() {
   try {
     const snap = await db.collection('users').get();
+    // Show all users EXCEPT admins
     allUsers = snap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== 'admin');
     renderUsers();
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error('loadUsers error:', e); }
 }
 
 function renderUsers() {
@@ -346,9 +347,33 @@ async function createUser() {
   const display  = document.getElementById('nDisplay').value.trim();
   if (!username || !email || !pass) { showModalErr('Username, email and password are required'); return; }
   if (pass.length < 6) { showModalErr('Password must be at least 6 characters'); return; }
+
+  // Check username unique
+  const existing = await db.collection('users').where('username','==',username).get();
+  if (!existing.empty) { showModalErr('Username already taken'); return; }
+
+  // Use Firebase REST API to create user WITHOUT switching auth session
+  const apiKey = firebaseConfig.apiKey;
   try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    await db.collection('users').doc(cred.user.uid).set({
+    // Create auth user via REST API
+    const res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + apiKey, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password: pass, returnSecureToken: true})
+    });
+    const data = await res.json();
+    if (data.error) {
+      const msgs = {
+        'EMAIL_EXISTS':      'This email is already registered',
+        'INVALID_EMAIL':     'Invalid email format',
+        'WEAK_PASSWORD':     'Password is too weak (min 6 chars)',
+      };
+      showModalErr(msgs[data.error.message] || data.error.message);
+      return;
+    }
+    const newUid = data.localId;
+    // Save user data to Firestore
+    await db.collection('users').doc(newUid).set({
       username, email, displayName: display || username,
       role: 'user', active: true,
       bookingCount: 0, totalCost: 0,
@@ -356,14 +381,8 @@ async function createUser() {
     });
     closeModal();
     await loadUsers();
-    showView('users', document.querySelector('.sb-nav a:nth-child(2)'));
   } catch(e) {
-    const msgs = {
-      'auth/email-already-in-use': 'This email is already registered',
-      'auth/invalid-email':        'Invalid email format',
-      'auth/weak-password':        'Password is too weak',
-    };
-    showModalErr(msgs[e.code] || e.message);
+    showModalErr('Error: ' + e.message);
   }
 }
 
@@ -410,7 +429,7 @@ function filterBookings(q) {
 async function loadBilling() {
   try {
     const snap = await db.collection('users').get();
-    const users = snap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== 'admin');
+    const users = snap.docs.map(d => ({id:d.id,...d.data()})).filter(u => u.role !== 'admin' && u.email);
     document.getElementById('tBilling').innerHTML = users.length ? users.map(u =>
       '<tr>'
       + '<td><strong>' + (u.username||'—') + '</strong></td>'
