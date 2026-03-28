@@ -249,7 +249,7 @@ footer strong{color:#fff;}
     </div>
     <div class="login-title">Welcome Back</div>
     <div class="login-sub">Sign in to access the booking system</div>
-    <div class="lf"><label>Username</label><input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username"></div>
+    <div class="lf"><label>Username</label><input type="text" id="loginUser" placeholder="Username or email" autocomplete="username"></div>
     <div class="lf"><label>Password</label><input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password"></div>
     <button class="login-btn" onclick="doLogin()">Sign In →</button>
     <div class="login-err" id="loginErr">Invalid username or password</div>
@@ -1347,21 +1347,38 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 async function doLogin() {
-  const username = document.getElementById('loginUser').value.trim();
-  const password = document.getElementById('loginPass').value.trim();
-  if (!username || !password) { showLoginErr('Please enter username and password'); return; }
+  const usernameOrEmail = document.getElementById('loginUser').value.trim();
+  const password        = document.getElementById('loginPass').value.trim();
+  if (!usernameOrEmail || !password) { showLoginErr('Please enter username and password'); return; }
 
   document.querySelector('.login-btn').textContent = 'Signing in...';
   document.querySelector('.login-btn').disabled = true;
 
   try {
-    // Look up email by username in Firestore
-    const snap = await db.collection('users').where('username','==',username).limit(1).get();
-    if (snap.empty) { showLoginErr('Invalid username or password'); resetLoginBtn(); return; }
-    const userData = snap.docs[0].data();
-    if (userData.active === false) { showLoginErr('This account has been disabled.'); resetLoginBtn(); return; }
-    // Sign in with email
-    await auth.signInWithEmailAndPassword(userData.email, password);
+    let email = usernameOrEmail;
+    let userData = null;
+
+    // Check if input is email or username
+    if (!usernameOrEmail.includes('@')) {
+      // It's a username — look up email
+      const snap = await db.collection('users').where('username','==',usernameOrEmail).limit(1).get();
+      if (snap.empty) { showLoginErr('Invalid username or password'); resetLoginBtn(); return; }
+      userData = snap.docs[0].data();
+      email = userData.email;
+    } else {
+      // It's an email — look up user data
+      const snap = await db.collection('users').where('email','==',usernameOrEmail).limit(1).get();
+      if (!snap.empty) userData = snap.docs[0].data();
+    }
+
+    // Check if disabled
+    if (userData && userData.active === false) {
+      showLoginErr('This account has been disabled. Contact admin.');
+      resetLoginBtn(); return;
+    }
+
+    // Sign in
+    await auth.signInWithEmailAndPassword(email, password);
     document.getElementById('loginErr').classList.remove('show');
   } catch(e) {
     showLoginErr('Invalid username or password');
