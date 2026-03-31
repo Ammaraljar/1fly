@@ -231,12 +231,99 @@ nav a:hover{color:#e87020;}
 
 footer{background:var(--sky);color:#7a9cc8;text-align:center;padding:20px;font-size:11px;}
 footer strong{color:#fff;}
-@media(max-width:768px){
-  .sf,.sf.rt{grid-template-columns:1fr 1fr;}
-  .fci{flex-wrap:wrap;}
-  .fg2,.fg2.g3,.fg2.g4{grid-template-columns:1fr 1fr;}
-  .sgrid{grid-template-columns:1fr;}
+/* ── TABLET (max 1024px) ── */
+@media(max-width:1024px){
+  /* ── TABLET ── */
+  .sf{grid-template-columns:1fr 32px 1fr 130px 1fr auto !important;}
+  .sf.rt{grid-template-columns:1fr 32px 1fr 130px 130px 1fr auto !important;}
+  .fci{gap:12px;padding:14px 16px;}
+  .bigt{font-size:19px;}
+  .pm2{font-size:20px;}
+  .main{padding:0 12px 40px;}
+  #v4 > div{grid-template-columns:1fr 300px;}
+  .mc-leg-grid{grid-template-columns:1fr 32px 1fr 140px auto;}
 }
+@media(max-width:768px){
+  /* ── HEADER ── */
+  header{padding:10px 14px;flex-wrap:wrap;gap:8px;}
+  nav{gap:8px;flex-wrap:wrap;}
+  nav a{font-size:11px;}
+  .user-badge{font-size:11px;padding:5px 10px;}
+  .logout-btn{font-size:10px;padding:4px 8px;}
+  /* ── HERO ── */
+  .hero{padding:22px 14px 16px;}
+  .hero h1{font-size:24px;}
+  .chips{gap:6px;justify-content:center;}
+  .chip{font-size:10px;padding:4px 10px;}
+  /* ── SEARCH BOX ── */
+  .sw{padding:0 10px;margin:14px auto 18px;}
+  .sb{padding:16px 14px;}
+  .tabs{width:100%;justify-content:stretch;}
+  .tab{flex:1;font-size:12px;padding:7px 8px;}
+  .sf,.sf.rt{grid-template-columns:1fr !important;gap:10px;}
+  .swap{width:100%;border-radius:var(--r);justify-content:center;height:36px;}
+  #retFld{display:block !important;}
+  .sbtn{width:100%;justify-content:center;padding:12px;}
+  /* ── MC LEGS ── */
+  .mc-leg-grid{grid-template-columns:1fr 1fr !important;gap:8px;}
+  #mcForm .sbtn{width:100%;}
+  /* ── STEPS ── */
+  .stw{padding:0 10px;}
+  .sts{padding:10px 14px;gap:4px;overflow-x:auto;}
+  .st:not(:last-child)::after{display:none;}
+  .stl{font-size:9px;}
+  .stn{width:26px;height:26px;font-size:11px;}
+  /* ── FLIGHT CARDS ── */
+  .fci{flex-wrap:wrap;gap:10px;padding:14px 14px;}
+  .ft{flex-wrap:wrap;gap:8px;width:100%;}
+  .bigt{font-size:18px;}
+  .dl{min-width:60px;}
+  .prs{width:100%;display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--g100);}
+  .pm2{font-size:18px;}
+  .fcr{display:none;}
+  .ali{flex-direction:row;align-items:center;gap:8px;min-width:unset;width:100%;}
+  /* ── MAIN CONTENT ── */
+  .main{padding:0 10px 32px;}
+  .rh{flex-direction:column;gap:8px;}
+  .sortbar{gap:6px;}
+  .sortbtn{font-size:10px;padding:5px 10px;}
+  /* ── PAX FORM ── */
+  .sc{padding:16px 14px;}
+  .sct{font-size:13px;}
+  .fg2,.fg2.g3,.fg2.g4{grid-template-columns:1fr 1fr;}
+  /* ── PAYMENT ── */
+  #v4 > div{grid-template-columns:1fr !important;}
+  .pmb{gap:8px;}
+  .pmbtn{padding:10px 8px;}
+  /* ── CONFIRMATION ── */
+  .cfbox{padding:24px 16px;}
+  .pnrbox{font-size:20px;letter-spacing:4px;padding:12px 16px;}
+  .sgrid{grid-template-columns:1fr;}
+  .ibtn{width:100%;justify-content:center;}
+  /* ── NAV BUTTONS ── */
+  .nav{flex-direction:column;gap:10px;}
+  .bbk,.bnx{width:100%;justify-content:center;text-align:center;}
+  /* ── RETURN BANNER ── */
+  .return-banner{flex-wrap:wrap;gap:10px;}
+  .rb-flight{margin-left:0;width:100%;}
+  /* ── MC RESULTS ── */
+  .mc-leg-header{flex-wrap:wrap;gap:6px;}
+  .leg-date{width:100%;}
+}
+@media(max-width:480px){
+  .hero h1{font-size:20px;}
+  .bigt{font-size:16px;}
+  .fg2,.fg2.g3,.fg2.g4{grid-template-columns:1fr;}
+  .tabs{flex-wrap:wrap;}
+  .tab{font-size:11px;}
+  .fci{padding:12px 10px;}
+  .pm2{font-size:16px;}
+  .sgrid{grid-template-columns:1fr;}
+  .pnrbox{font-size:18px;letter-spacing:3px;}
+  .mc-leg-grid{grid-template-columns:1fr !important;}
+  nav a{display:none;}
+}
+
 
 </style>
 </head>
@@ -427,7 +514,7 @@ footer strong{color:#fff;}
   </div>
   <!-- STEP 4: PAYMENT -->
   <div class="view" id="v4">
-    <div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+    <div class="v4-grid" style="display:grid;grid-template-columns:1fr 360px;gap:18px">
       <div>
         <div class="sc">
           <div class="sct">💳 Payment Method</div>
@@ -1703,7 +1790,7 @@ function renderMcResults() {
   let html='';
   S.mcResults.forEach((leg,i)=>{
     const isActive=i===S.mcCurrentLeg, isSel=!!leg.selFlight;
-    html+='<div class="mc-results-section"><div class="mc-leg-header"><div class="leg-num">'+(i+1)+'</div><div class="leg-route">'+getCity(leg.orig)+' ('+leg.orig+') → '+getCity(leg.dest)+' ('+leg.dest+')</div><div class="leg-date">'+fd(leg.date)+'</div>'+(isSel?'<span class="mc-selected-badge">✓ '+leg.selFlight.flightNum+' Selected</span>':'')+'</div>';
+    html+='<div class="mc-results-section" id="mcSection'+i+'" ><div class="mc-leg-header"><div class="leg-num">'+(i+1)+'</div><div class="leg-route">'+getCity(leg.orig)+' ('+leg.orig+') → '+getCity(leg.dest)+' ('+leg.dest+')</div><div class="leg-date">'+fd(leg.date)+'</div>'+(isSel?'<span class="mc-selected-badge">✓ '+leg.selFlight.flightNum+' Selected</span>':'')+'</div>';
     if (isActive) {
       html+='<div style="border:2px solid var(--sky);border-top:none;border-radius:0 0 var(--rl) var(--rl);padding:14px;">'+(leg.flights&&leg.flights.length?leg.flights.map(f=>fCard(f,'mc'+i)).join(''):'<div class="nores" style="padding:24px"><div class="ic">✈</div><h3>No flights found</h3></div>')+'</div>';
     } else if (isSel) {
@@ -1721,11 +1808,24 @@ function renderMcResults() {
 }
 function changeMcFlight(i){S.mcCurrentLeg=i;S.mcResults[i].selFlight=null;renderMcResults();}
 function goMcPax(){
-  S.selO=S.mcResults[0].selFlight;S.selO.depDate=S.mcResults[0].date;
-  S.mcSelectedFlights=S.mcResults.map(l=>({...l.selFlight,depDate:l.date}));
+  // Store ALL selected MC flights
+  S.mcSelectedFlights = S.mcResults.map(l=>({...l.selFlight, depDate:l.date}));
+  // Set selO to first flight for compatibility
+  S.selO = {...S.mcResults[0].selFlight, depDate:S.mcResults[0].date};
+  S.selR = null;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('stw').style.display='';
-  renderPax();document.getElementById('v3').classList.add('active');
+  // Update steps for MC (show 4 steps, no return step)
+  [1,2,3,4,5].forEach(i=>{
+    const el=document.getElementById('si'+i);
+    if(!el) return;
+    el.classList.remove('active','done');
+    if(i===2) el.style.display='none';
+    if(i===1) el.classList.add('done');
+    if(i===3) el.classList.add('active');
+  });
+  renderPax();
+  document.getElementById('v3').classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1781,9 +1881,20 @@ function fCard(f, type) {
 function selF(id, type) {
   if (type.startsWith('mc')) {
     const li=parseInt(type.replace('mc',''));
-    S.mcResults[li].selFlight=S.mcResults[li].flights.find(f=>f.id===id);
-    if(li<S.mcResults.length-1) S.mcCurrentLeg=li+1;
+    const leg = S.mcResults[li];
+    leg.selFlight = leg.flights.find(f=>f.id===id);
+    // Move to next unselected leg
+    let nextLeg = -1;
+    for (let i=0; i<S.mcResults.length; i++) {
+      if (!S.mcResults[i].selFlight) { nextLeg=i; break; }
+    }
+    S.mcCurrentLeg = nextLeg >= 0 ? nextLeg : S.mcResults.length-1;
     renderMcResults();
+    // Smooth scroll to next section
+    setTimeout(() => {
+      const nextEl = document.getElementById('mcSection'+S.mcCurrentLeg);
+      if (nextEl) nextEl.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 200);
   } else if (type==='out') {
     S.selO=S.outF.find(f=>f.id===id);
     renderFL('outFL',S.outF,'out');
@@ -1976,7 +2087,10 @@ function issueTicket(){
   }[f.airline] || {h:'#1e3a5f',s:'#0f2035',bg:'#f5f8ff'};
 
   // ── Build all flight segments (outbound + return if any) ──
-  const bookings = S.selR ? [S.selO, S.selR] : [S.selO];
+  // For multi-city, use all selected flights
+  const bookings = S.trip === 'mc' && S.mcSelectedFlights && S.mcSelectedFlights.length
+    ? S.mcSelectedFlights
+    : S.selR ? [S.selO, S.selR] : [S.selO];
 
   function buildSegments(flight){
     const segs = [];
@@ -2093,7 +2207,7 @@ function issueTicket(){
         <td colspan="6" style="padding:8px 16px">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <span style="color:white;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase">
-              ${bi===0?'✈ Outbound Flight':'↩ Return Flight'} — ${bk.from} to ${bk.to}
+              ${S.trip==='mc'?('✈ Flight '+(bi+1)):bi===0?'✈ Outbound Flight':'↩ Return Flight'} — ${bk.from} to ${bk.to}
             </span>
             <span style="color:rgba(255,255,255,.7);font-size:10px">${stops} · ${cabinTxt} · Baggage: ${bag}</span>
           </div>
